@@ -1,0 +1,6 @@
+g,user,user
+g,admin,user
+g,admin,admin
+g,super,user
+g,super,admin
+g,super,super

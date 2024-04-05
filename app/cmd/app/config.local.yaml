@@ -1,0 +1,38 @@
+
+app:
+
+
+http:
+  host: "0.0.0.0"
+  port: 8000
+  read-timeout: "5s"
+  write-timeout: "10s"
+  idle-timeout: "120s"
+  read-header-timeout: "7s"
+  re-request: "1s"
+  cors:
+    debug: true
+    allowed-methods: [ "GET", "POST", "PATCH", "PUT", "OPTIONS", "DELETE" ]
+    allowed-origins:
+      - "http://localhost:3000"
+    allow-credentials: true
+    allowed-headers:
+      - "Authorization"
+      - "Location"
+      - "Charset"
+      - "Access-Control-Allow-Origin"
+      - "Content-Type"
+      - "Origin"
+      - "Accept"
+      - "Content-Length"
+      - "Accept-Encoding"
+      - "X-CSRF-Token"
+    options-passthrough: true
+    exposed-headers:
+      - "Location"
+      - "Authorization"
+      - "Content-Disposition"
+
+psql:
+
+
