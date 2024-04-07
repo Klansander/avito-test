@@ -6,6 +6,7 @@ import (
 )
 
 type Service struct {
+	Banner Banner
 }
 
 var once sync.Once
@@ -14,7 +15,9 @@ var service *Service
 func NewService(r *repository.Repository) *Service {
 
 	once.Do(func() {
-		service = &Service{}
+		service = &Service{
+			Banner: NewBanner(r),
+		}
 	})
 
 	return service

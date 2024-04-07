@@ -1,6 +1,7 @@
 package thttp
 
 import (
+	"avito/internal/model"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,34 +13,45 @@ func (r *Router) setRoutingTable() {
 
 	r.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	r.Router.GET("/user_banner")
+	r.Router.GET("/user_banner", r.authorize(model.UserToken), r.userBanner)
 	banner := r.Router.Group("/banner")
 	{
-		banner.POST("")
-		banner.GET("")
-		banner.PATCH("/:id")
-		banner.DELETE("/:id")
+		banner.GET("", r.authorize(model.AdminToken), r.listBanner)
+		banner.POST("", r.authorize(model.AdminToken), r.createBanner)
+		banner.PATCH(",/:id", r.authorize(model.AdminToken), r.updateBanner)
+		banner.DELETE("/:id", r.authorize(model.AdminToken), r.deleteBanner)
 	}
 
-	r.Router.NoRoute(func(ctx *gin.Context) {
-		ctx.AbortWithStatusJSON(http.StatusNotFound, "Маршрут не найден")
+	r.Router.NoRoute(func(c *gin.Context) {
+		c.AbortWithStatusJSON(http.StatusNotFound, "Маршрут не найден")
 	})
 
 }
 
-//func middlewareGetUser() gin.HandlerFunc {
-//
-//	return func(c *gin.Context) {
-//
-//		claims := jwt.ExtractClaims(c)
-//		userID, err := uuid.FromString(claims["user_id"].(string))
-//		if err != nil {
-//			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Пользователь не опознан системой."})
-//			return
-//		}
-//
-//		c.Request = c.Request.WithContext(pc.AddUserID(c.Request.Context(), userID))
-//		c.Next()
-//	}
-//
-//}
+func (r *Router) authorize(action string) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+
+		token := c.GetHeader("token")
+
+		// Проверяем, присутствует ли токен
+		if token == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Пользователь не авторизован"})
+			return
+		}
+
+		// Проверяем наличие прав у пользователя
+		if _isValidToken(token, action) {
+			c.Next()
+		} else {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"message": "Пользователь не имеет доступа"})
+		}
+
+	}
+
+}
+
+// Функция для проверки токена
+func _isValidToken(token string, checkToken string) bool {
+	return token == checkToken
+}
