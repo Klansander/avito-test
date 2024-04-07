@@ -24,20 +24,20 @@ func NewBanner(db *postgresql.Postgres) *BannerRepository {
 
 }
 
-func (r *BannerRepository) UserBanner(c context.Context) error {
+func (r *BannerRepository) UserBanner(c context.Context, userBannerQuery model.UserBannerQueryGet) error {
 	return nil
 }
 
-func (r *BannerRepository) ListBanner(c context.Context) error {
+func (r *BannerRepository) ListBanner(c context.Context, userBannerQuery model.UserBannerQueryList) error {
 	return nil
 }
 
-func (r *BannerRepository) CreateBanner(c context.Context) error {
+func (r *BannerRepository) CreateBanner(c context.Context, headerBanner model.HeaderBanner) error {
 	return nil
 }
-func (r *BannerRepository) UpdateBanner(c context.Context) error {
+func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerBanner model.HeaderBanner) error {
 	return nil
 }
-func (r *BannerRepository) DeleteBanner(c context.Context) error {
+func (r *BannerRepository) DeleteBanner(c context.Context, bannerID int) error {
 	return nil
 }

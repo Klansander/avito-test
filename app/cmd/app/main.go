@@ -1,12 +1,12 @@
 package main
 
 import (
+	"avito/pkg/config"
 	"context"
 	"os"
 	"os/signal"
 	"path"
 	"runtime"
-	"avito/pkg/config"
 	"strings"
 	"syscall"
 
@@ -98,19 +98,3 @@ func main() {
 	logrus.Warn("app stopped")
 
 }
-
-// func initDistributionStatic(ctx context.Context) {
-
-// 	conf := config.GetConfig(ctx)
-
-// 	if conf.HTTP.StartFront {
-// 		application := fiber.New(fiber.Config{DisableStartupMessage: true})
-// 		application.Static("/", conf.HTTP.DistFolder)
-// 		application.Get("/*", func(ctx *fiber.Ctx) error {
-// 			return ctx.SendFile(fmt.Sprintf("%s/index.html", conf.HTTP.DistFolder))
-// 		})
-// 		// TODO Обязательно реализовать Shutdown
-// 		_ = application.Listen(fmt.Sprintf("0.0.0.0:%d", conf.HTTP.DistPort))
-// 	}
-
-// }

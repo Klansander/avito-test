@@ -1,7 +1,5 @@
 
 app:
-
-
 http:
   host: "0.0.0.0"
   port: 8000
@@ -14,10 +12,11 @@ http:
     debug: true
     allowed-methods: [ "GET", "POST", "PATCH", "PUT", "OPTIONS", "DELETE" ]
     allowed-origins:
-      - "http://localhost:3000"
+      - "*"
     allow-credentials: true
     allowed-headers:
       - "Authorization"
+      - "token"
       - "Location"
       - "Charset"
       - "Access-Control-Allow-Origin"
@@ -34,5 +33,12 @@ http:
       - "Content-Disposition"
 
 psql:
+  host: "10.10.10.166"
+  port: 5432
+  username: "pgtrans_sql"
+  password: "pgtrans_sql"
+  database: "sfera_dev"
+  timeout: "2s"
+  limit-max: 1000
 
 
