@@ -12,7 +12,6 @@ import (
 	pc "avito/pkg/context"
 	"avito/pkg/errors"
 	"avito/pkg/postgresql"
-	"avito/pkg/sse"
 
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
@@ -23,7 +22,6 @@ type App struct {
 	router     *thttp.Router
 	httpServer *http.Server
 	pgClient   *postgresql.Postgres
-	stream     *sse.Event
 	service    *service.Service
 }
 
@@ -37,7 +35,6 @@ func New(ctx context.Context) (*App, error) {
 
 	repository := repository.NewRepository(pgClient)
 	service := service.NewService(repository)
-	stream := sse.NewServerSSE(ctx)
 
 	router, err := thttp.NewRouter(ctx, service)
 	if err != nil {
@@ -47,7 +44,6 @@ func New(ctx context.Context) (*App, error) {
 	return &App{
 		router:   router,
 		pgClient: pgClient,
-		stream:   stream,
 		service:  service,
 	}, nil
 

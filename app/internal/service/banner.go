@@ -25,19 +25,26 @@ func NewBanner(r *repository.Repository) *BannerService {
 }
 
 func (s *BannerService) UserBanner(c context.Context, userBannerQuery model.UserBannerQueryGet) error {
-	return s.r.Banner.UserBanner(c, userBannerQuery)
+	s.r.Banner.UserBanner(c, userBannerQuery)
+	return nil
 }
 
 func (s *BannerService) ListBanner(c context.Context, userBannerQuery model.UserBannerQueryList) error {
-	return s.r.Banner.ListBanner(c, userBannerQuery)
+
+	s.r.Banner.ListBanner(c, userBannerQuery)
+
+	return nil
 }
 func (s *BannerService) CreateBanner(c context.Context, headerBanner model.HeaderBanner) error {
-	return s.r.Banner.CreateBanner(c, headerBanner)
+	s.r.Banner.CreateBanner(c, headerBanner)
+	return nil
 }
 
 func (s *BannerService) UpdateBanner(c context.Context, bannerID int, headerBanner model.HeaderBanner) error {
 	return s.r.Banner.UpdateBanner(c, bannerID, headerBanner)
 }
 func (s *BannerService) DeleteBanner(c context.Context, bannerID int) error {
-	return s.r.Banner.DeleteBanner(c, bannerID)
+	s.r.Banner.DeleteBanner(c, bannerID)
+
+	return nil
 }

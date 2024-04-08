@@ -33,11 +33,11 @@ http:
       - "Content-Disposition"
 
 psql:
-  host: "10.10.10.166"
+  host: "database"
   port: 5432
-  username: "pgtrans_sql"
-  password: "pgtrans_sql"
-  database: "sfera_dev"
+  username: "grandeas"
+  password: "grandeas"
+  database: "avito_dev"
   timeout: "2s"
   limit-max: 1000
 
