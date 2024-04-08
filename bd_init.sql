@@ -5,7 +5,7 @@ drop table if exists banners;
 
 create table banners
 (
-    id         serial                                   primary key,
+    id         serial primary key,
     is_active  boolean                                not null,
     content    jsonb                                  not null,
     created_at timestamp with time zone default now() not null,
@@ -15,8 +15,9 @@ create table banners
 
 create table contents
 (
-    id         serial  primary key,
-    banner_id  int constraint rel_banner references banners on delete cascade,
+    id         serial primary key,
+    banner_id  int
+        constraint rel_banner references banners on delete cascade,
     tag_id     int not null,
     feature_id int not null
 
@@ -24,13 +25,14 @@ create table contents
 
 create unique index tag_feature on contents (tag_id, banner_id);
 
-create or replace function fn_banner_ins(i_is_active boolean, i_tag_id int[], i_feature_id int, i_content json) returns int
+create or replace function fn_banner_ins(i_is_active boolean, i_tag_id int[], i_feature_id int,
+                                         i_content json) returns int
     language plpgsql
 as
 $$
 declare
-v_id  int;
-   i int;
+v_id int;
+    i    int;
 begin
 
 insert into public.banners(is_active, content)
@@ -44,7 +46,6 @@ for i in 1 .. array_length(i_tag_id, 1)
 end loop;
 
 
-
 return v_id;
 
 end;
@@ -52,7 +53,7 @@ $$;
 
 --alter function fn_banner_ins( boolean, int[], int, json, out int) owner to grandeas;
 
-create or replace function fn_banner_get(i_tag_id int, i_feature_id int,  out o_json json,
+create or replace function fn_banner_get(i_tag_id int, i_feature_id int, out o_json json,
                                          out o_res int, out o_mes text) returns record
     language plpgsql
 as
@@ -63,7 +64,8 @@ begin
     o_mes = '';
     if (select count(*)
         from public.contents c
-        where c.tag_id = i_tag_id and c.feature_id=i_feature_id) = 0
+        where c.tag_id = i_tag_id
+          and c.feature_id = i_feature_id) = 0
     then
         o_res = 1;
 o_mes = 'Баннер для тега не найден';
@@ -86,7 +88,6 @@ end;
 $$;
 
 
-
 --alter function fn_banner_get(int,int, out json) owner to grandeas;
 
 create or replace function fn_banner_list(i_tag_id int, i_feature_id int, i_limit int, i_offset int,
@@ -97,27 +98,23 @@ $$
 begin
 
 select json_agg(t1.p1)
-from (
-         select json_build_object(
-                        'content', cb.content,
-                        'tag_id', array_agg(cb.tag_id),
-                        'feature_id', cb.feature_id,
-                        'banner_id', cb.banner_id,
-                        'is_active', cb.is_active,
-                        'created_at', cb.created_at,
-                        'updated_at', cb.updated_at
-                ) as p1
-         from (
-                  select *
-                  from contents
-                           inner join banners b on b.id = contents.banner_id
-                  where (i_tag_id is null or tag_id = i_tag_id)
-                    and (i_feature_id is null or feature_id = i_feature_id)
-                  order by contents.id
-                      limit i_limit offset i_offset
-              ) as cb
-         group by feature_id, content, banner_id, is_active, created_at, updated_at
-     ) as t1
+from (select json_build_object(
+                     'content', cb.content,
+                     'tag_id', array_agg(cb.tag_id),
+                     'feature_id', cb.feature_id,
+                     'banner_id', cb.banner_id,
+                     'is_active', cb.is_active,
+                     'created_at', cb.created_at,
+                     'updated_at', cb.updated_at
+             ) as p1
+      from (select *
+            from contents
+                     inner join banners b on b.id = contents.banner_id
+            where (i_tag_id is null or tag_id = i_tag_id)
+              and (i_feature_id is null or feature_id = i_feature_id)
+            order by contents.id
+                limit i_limit offset i_offset) as cb
+      group by feature_id, content, banner_id, is_active, created_at, updated_at) as t1
     into o_json;
 
 return;
@@ -127,7 +124,7 @@ $$;
 
 --alter function fn_banner_list(int,int,int,int, json, int, text) owner to grandeas;
 
-create or replace function fn_banner_del(i_banner_id int,out o_res int, out o_mes text) returns record
+create or replace function fn_banner_del(i_banner_id int, out o_res int, out o_mes text) returns record
     language plpgsql
 as
 $$
@@ -142,7 +139,8 @@ begin
 o_mes = 'Баннер для тега не найден';
         return;
 end if;
-delete  from public.banners b
+delete
+from public.banners b
 where b.id = i_banner_id;
 
 o_mes = 'Баннер успешно удален';
@@ -157,4 +155,36 @@ $$;
 -- UPDATE banners
 -- SET tag_id = 3
 
+create or replace function fn_banner_get_by_id(i_banner_id int,
+                                           out o_json json, out o_res int, out o_mes text) returns json
+    language plpgsql
+as
+$$
+begin
 
+    o_mes = '';
+    o_res = 0;
+
+
+select json_build_object(
+               'content', cb.content,
+               'tag_id', array_agg(cb.tag_id),
+               'feature_id', cb.feature_id,
+               'banner_id', cb.banner_id,
+               'is_active', cb.is_active,
+               'created_at', cb.created_at,
+               'updated_at', cb.updated_at
+       )
+from (select *
+      from contents
+               inner join banners b on b.id = contents.banner_id
+      where (banner_id = i_banner_id)) as cb
+group by feature_id, content, banner_id, is_active, created_at, updated_at
+    into o_json;
+
+return;
+
+end;
+$$;
+
+--alter function fn_banner_get_by_id(int, json, int, text) owner to grandeas;

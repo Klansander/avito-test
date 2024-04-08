@@ -16,10 +16,10 @@ type UserBannerQueryList struct {
 
 type HeaderBanner struct {
 	Content  map[string]interface{} `json:"content"`
-	IsActive bool                   `json:"is_active,omitempty"`
+	IsActive *bool                  `json:"is_active,omitempty"`
 	//	BannerID  int                    `json:"banner_id,omitempty"`
-	TagID     int `json:"tag_id,omitempty"`
-	FeatureID int `json:"feature_id,omitempty"`
+	TagID     *[]int `json:"tag_id,omitempty"`
+	FeatureID *int   `json:"feature_id,omitempty"`
 }
 
 type Banner struct {

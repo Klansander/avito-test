@@ -26,11 +26,12 @@ func (r *Router) userBanner(c *gin.Context) {
 		_ = c.Error(errors.Wrap(err))
 		return
 	}
-	err := r.service.Banner.UserBanner(c.Request.Context(), queryParams)
+	data, err := r.service.Banner.UserBanner(c.Request.Context(), queryParams)
 	if err != nil {
 		_ = c.Error(errors.Wrap(err))
 		return
 	}
+	c.JSON(200, data)
 }
 
 // listBanner
@@ -55,7 +56,13 @@ func (r *Router) listBanner(c *gin.Context) {
 	}
 	_ = c.Request.Body.Close()
 
-	r.service.Banner.ListBanner(c, userBannerQuery)
+	data, err := r.service.Banner.ListBanner(c, userBannerQuery)
+	if err != nil {
+		_ = c.Error(errors.Wrap(err))
+		return
+	}
+
+	c.JSON(200, data)
 
 }
 
@@ -136,5 +143,7 @@ func (r *Router) deleteBanner(c *gin.Context) {
 	}
 	_ = c.Request.Body.Close()
 
-	r.service.Banner.DeleteBanner(c, bannerID)
+	mes, err := r.service.Banner.DeleteBanner(c, bannerID)
+
+	c.JSON(200, mes)
 }

@@ -5,6 +5,7 @@ go 1.22rc1
 require (
 	github.com/appleboy/gin-jwt/v2 v2.9.2
 	github.com/casbin/casbin/v2 v2.86.0
+	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/ilyakaznacheev/cleanenv v1.5.0
