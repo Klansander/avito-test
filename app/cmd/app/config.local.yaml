@@ -41,4 +41,10 @@ psql:
   timeout: "2s"
   limit-max: 1000
 
+cron:
+  interval: '1s'
+
+redis:
+  host: "localhost"
+  port: 6379
 

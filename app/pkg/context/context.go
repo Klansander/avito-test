@@ -1,12 +1,9 @@
 package context
 
 import (
-	"context"
-	"fmt"
-
 	"avito/pkg/config"
+	"context"
 
-	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -30,17 +27,5 @@ func GetConfig(ctx context.Context) *config.Config {
 	logrus.Error("Отсутствует инициализация системы конфигурации")
 
 	return nil
-
-}
-
-func GetUserID(ctx context.Context) uuid.UUID {
-
-	if id, ok := ctx.Value(ctxUser{}).(uuid.UUID); ok {
-		fmt.Println(id)
-		return id
-	}
-	fmt.Println("!!")
-
-	return uuid.Nil
 
 }

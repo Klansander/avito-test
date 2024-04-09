@@ -5,32 +5,62 @@ import (
 	pc "avito/pkg/context"
 	"avito/pkg/errors"
 	"avito/pkg/postgresql"
+	"avito/pkg/redis"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/jackc/pgx/v4"
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 type Banner interface {
-	UserBanner(c context.Context, userBannerQuery model.UserBannerQueryGet, is_admin bool) (data map[string]interface{}, err error)
+	UserBannerRedis(c context.Context, userBannerQuery model.UserBannerQueryGet, isAdmin bool) (data map[string]interface{}, err error)
+	UserBanner(c context.Context, userBannerQuery model.UserBannerQueryGet, isAdmin bool) (data map[string]interface{}, err error)
 	ListBanner(c context.Context, userBannerQuery model.UserBannerQueryList) (data []model.Banner, err error)
 	CreateBanner(c context.Context, headerBanner model.NewBanner) (id int, err error)
 	UpdateBanner(c context.Context, bannerID int, headerBanner map[string]interface{}) error
 	DeleteBanner(c context.Context, bannerID int) (mes string, err error)
+	SaveVersionBanner(c context.Context)
 }
 
 type BannerRepository struct {
-	db *postgresql.Postgres
+	db  *postgresql.Postgres
+	dbR *rediscl.Redis
 }
 
-func NewBanner(db *postgresql.Postgres) *BannerRepository {
+func NewBanner(db *postgresql.Postgres, dbR *rediscl.Redis) *BannerRepository {
 
-	return &BannerRepository{db: db}
+	return &BannerRepository{db: db, dbR: dbR}
 
+}
+
+func (r *BannerRepository) UserBannerRedis(c context.Context, userBannerQuery model.UserBannerQueryGet, isAdmin bool) (data map[string]interface{}, err error) {
+
+	valKey, err := r.dbR.DB.Get(c, fmt.Sprintf("new%d%d", userBannerQuery.TagID, userBannerQuery.FeatureID)).Bool()
+	if err != nil {
+		fmt.Println("Ошибка получения объекта из Redis:", err)
+		return
+	}
+	if !valKey && !isAdmin {
+		return nil, errors.New(http.StatusNotFound, "Баннер не найден")
+	}
+
+	val, err := r.dbR.DB.Get(c, fmt.Sprintf("new%d%d", userBannerQuery.TagID, userBannerQuery.FeatureID)).Result()
+	if err != nil {
+		fmt.Println("Ошибка получения объекта из Redis:", err)
+		return
+	}
+
+	if err := json.Unmarshal([]byte(val), &data); err != nil {
+		fmt.Println("Ошибка размаршаливания JSON:", err)
+		return
+	}
+	return
 }
 
 func (r *BannerRepository) UserBanner(c context.Context, userBannerQuery model.UserBannerQueryGet, is_admin bool) (data map[string]interface{}, err error) {
@@ -194,6 +224,10 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 			return
 		}
 	}
+	r.updateRedis(data)
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
 	tx, err := r.db.DB.Begin(ctx)
 	if err != nil {
@@ -285,20 +319,38 @@ func _mergeData(dataOld map[string]interface{}, dataNew map[string]interface{}) 
 		return model.Banner{}, errors.Wrap(err)
 	}
 	var res model.Banner
-	//for key, value1 := range dataOld {
-	//	// Получаем значение по ключу из второй мапы
-	//	if value2, ok := dataNew[key]; ok {
-	//		// Если значения отличаются, добавляем их в новую мапу
-	//		if value1 != value2 {
-	//			dataOld[key] = value2
-	//		}
-	//	}
-	//}
-	fmt.Println(string(resByte))
+
 	if err := json.Unmarshal(resByte, &res); err != nil {
 		return model.Banner{}, errors.Wrap(err)
 	}
 	return res, nil
+
+}
+
+func (r *BannerRepository) updateRedis(obj map[string]interface{}) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := r.dbR.DB.LPush(ctx, strconv.Itoa(obj["banner_id"].(int)), "new_version").Err()
+	if err != nil {
+		logrus.Errorln("Ошибка при добавлении новой версии:", err)
+		return
+	}
+
+	listLen, err := r.dbR.DB.LLen(ctx, strconv.Itoa(obj["banner_id"].(int))).Result()
+	if err != nil {
+		logrus.Errorln("Ошибка при получении длины списка:", err)
+		return
+	}
+
+	if listLen > 3 {
+		err := r.dbR.DB.RPop(ctx, strconv.Itoa(obj["banner_id"].(int))).Err()
+		if err != nil {
+			logrus.Errorln("Ошибка при удалении старой версии:", err)
+			return
+		}
+	}
 
 }
 
@@ -339,4 +391,29 @@ func (r *BannerRepository) DeleteBanner(c context.Context, bannerID int) (mes st
 	}
 
 	return
+}
+
+func (r *BannerRepository) SaveVersionBanner(c context.Context) {
+	data, err := r.ListBanner(c, model.UserBannerQueryList{})
+	if err != nil {
+		logrus.Errorln("Ошибка при удалении старой версии:", err)
+		return
+	}
+	for _, item := range data {
+
+		key := fmt.Sprintf("new%d%d", item.TagID, item.FeatureID)
+		keyActive := fmt.Sprintf("new%d%dIsActive", item.TagID, item.FeatureID)
+
+		err = r.dbR.DB.Set(c, key, item.Content, 5*time.Minute).Err()
+		if err != nil {
+			logrus.Errorln("Ошибка добавления объекта в Redis:", err)
+			return
+		}
+		err = r.dbR.DB.Set(c, keyActive, item.IsActive, 5*time.Minute).Err()
+		if err != nil {
+			logrus.Errorln("Ошибка добавления объекта в Redis:", err)
+			return
+		}
+	}
+
 }

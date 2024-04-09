@@ -3,9 +3,9 @@ package model
 import "time"
 
 type UserBannerQueryGet struct {
-	TagID           int `form:"tag_id" binding:"required"`
-	FeatureID       int `form:"feature_id" binding:"required"`
-	UseLastRevision int `form:"use_last_revision" binding:"omitempty"`
+	TagID           int  `form:"tag_id" binding:"required"`
+	FeatureID       int  `form:"feature_id" binding:"required"`
+	UseLastRevision bool `form:"use_last_revision" binding:"omitempty"`
 }
 type UserBannerQueryList struct {
 	TagID     *int `form:"tag_id" `

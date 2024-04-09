@@ -28,6 +28,9 @@ func NewBanner(r *repository.Repository) *BannerService {
 
 func (s *BannerService) UserBanner(c context.Context, userBannerQuery model.UserBannerQueryGet, isAdmin bool) (data map[string]interface{}, err error) {
 
+	if !userBannerQuery.UseLastRevision {
+
+	}
 	data, err = s.r.Banner.UserBanner(c, userBannerQuery, isAdmin)
 	if err != nil {
 		return nil, err

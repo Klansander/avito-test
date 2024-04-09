@@ -33,6 +33,13 @@ type Config struct {
 		DistFolder string `yaml:"dist-folder" env:"HTTP_DIST_FOLDER"`
 		DistPort   int    `yaml:"dist-port" env:"HTTP_DIST_PORT"`
 	} `yaml:"http"`
+	Cron struct {
+		Interval time.Duration `yaml:"interval"`
+	} `yaml:"cron"`
+	Redis struct {
+		Host string `yaml:"host"`
+		Port int    `yaml:"port"`
+	} `yaml:"redis"`
 
 	PSQL struct {
 		Username string        `yaml:"username" env:"PSQL_USERNAME" env-required:"true"`

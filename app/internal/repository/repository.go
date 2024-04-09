@@ -2,6 +2,7 @@ package repository
 
 import (
 	"avito/pkg/postgresql"
+	"avito/pkg/redis"
 	"sync"
 )
 
@@ -12,11 +13,11 @@ type Repository struct {
 var once sync.Once
 var repository *Repository
 
-func NewRepository(db *postgresql.Postgres) *Repository {
+func NewRepository(db *postgresql.Postgres, dbR *rediscl.Redis) *Repository {
 
 	once.Do(func() {
 		repository = &Repository{
-			Banner: NewBanner(db),
+			Banner: NewBanner(db, dbR),
 		}
 	})
 

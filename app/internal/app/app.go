@@ -1,8 +1,11 @@
 package app
 
 import (
+	"avito/pkg/redis"
 	"context"
 	"fmt"
+	"github.com/go-co-op/gocron/v2"
+	"github.com/redis/go-redis/v9"
 	"net"
 	"net/http"
 
@@ -10,9 +13,9 @@ import (
 	"avito/internal/service"
 	"avito/internal/transport/thttp"
 	pc "avito/pkg/context"
+	"avito/pkg/cron"
 	"avito/pkg/errors"
 	"avito/pkg/postgresql"
-
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -23,6 +26,9 @@ type App struct {
 	httpServer *http.Server
 	pgClient   *postgresql.Postgres
 	service    *service.Service
+	redClient  *redis.Client
+	Cron       *cron2.Cron
+	repository *repository.Repository
 }
 
 func New(ctx context.Context) (*App, error) {
@@ -32,19 +38,21 @@ func New(ctx context.Context) (*App, error) {
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-
-	repository := repository.NewRepository(pgClient)
+	redClient, err := rediscl.New(ctx)
+	repository := repository.NewRepository(pgClient, redClient)
 	service := service.NewService(repository)
-
+	cron, err := cron2.NewCron(ctx)
 	router, err := thttp.NewRouter(ctx, service)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
 
 	return &App{
-		router:   router,
-		pgClient: pgClient,
-		service:  service,
+		router:     router,
+		pgClient:   pgClient,
+		service:    service,
+		Cron:       cron,
+		repository: repository,
 	}, nil
 
 }
@@ -100,8 +108,8 @@ func (a *App) startHTTP(ctx context.Context) error {
 	})
 
 	a.httpServer = &http.Server{
-		Handler: c.Handler(a.router.Router),
-		//WriteTimeout:      cfg.HTTP.WriteTimeout, // Для SSE его не установить
+		Handler:           c.Handler(a.router.Router),
+		WriteTimeout:      cfg.HTTP.WriteTimeout,
 		ReadTimeout:       cfg.HTTP.ReadTimeout,
 		IdleTimeout:       cfg.HTTP.IdleTimeout,
 		ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
@@ -122,4 +130,20 @@ func (a *App) startHTTP(ctx context.Context) error {
 	}
 	return nil
 
+}
+
+func (a *App) StartCron(ctx context.Context) error {
+
+	s := *a.Cron.Scheduler
+
+	// add a job to the scheduler
+	_, err := s.NewJob(gocron.CronJob("5 * * * * ", false), gocron.NewTask(a.repository.Banner.SaveVersionBanner, ctx))
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	// each job has a unique id
+
+	s.Start()
+
+	return nil
 }
