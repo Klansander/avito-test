@@ -18,7 +18,7 @@ func (r *Router) setRoutingTable() {
 	{
 		banner.GET("", r.authorize(model.AdminToken), r.listBanner)
 		banner.POST("", r.authorize(model.AdminToken), r.createBanner)
-		banner.PATCH(",/:id", r.authorize(model.AdminToken), r.updateBanner)
+		banner.PATCH("/:id", r.authorize(model.AdminToken), r.updateBanner)
 		banner.DELETE("/:id", r.authorize(model.AdminToken), r.deleteBanner)
 	}
 
@@ -36,15 +36,18 @@ func (r *Router) authorize(action string) gin.HandlerFunc {
 
 		// Проверяем, присутствует ли токен
 		if token == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Пользователь не авторизован"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Пользователь не авторизован"})
 			return
 		}
 
 		// Проверяем наличие прав у пользователя
-		if _isValidToken(token, action) {
+		if _isValidToken(c, token, action) {
+			if token == model.AdminToken {
+				c.Set("adm", true)
+			}
 			c.Next()
 		} else {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"message": "Пользователь не имеет доступа"})
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Пользователь не имеет доступа"})
 		}
 
 	}
@@ -52,6 +55,14 @@ func (r *Router) authorize(action string) gin.HandlerFunc {
 }
 
 // Функция для проверки токена
-func _isValidToken(token string, checkToken string) bool {
-	return token == checkToken
+func _isValidToken(c *gin.Context, token string, checkToken string) bool {
+	if token == model.AdminToken {
+		c.Set("adm", true)
+	} else if token == checkToken {
+		c.Set("adm", false)
+	} else {
+		return false
+	}
+
+	return true
 }

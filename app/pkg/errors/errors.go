@@ -43,7 +43,7 @@ func Cause(err error) error {
 
 func wrapPosition(level int) string {
 
-	f := getFrame(2)
+	f := getFrame(level)
 	_, filename := path.Split(f.File)
 	dir := strings.Split(f.Function, ".")[0]
 

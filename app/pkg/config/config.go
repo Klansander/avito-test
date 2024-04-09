@@ -35,17 +35,17 @@ type Config struct {
 	} `yaml:"http"`
 
 	PSQL struct {
-		Username string        `yaml:"username" `
-		Password string        `yaml:"password" `
-		Host     string        `yaml:"host" `
-		Port     int           `yaml:"port" `
-		Database string        `yaml:"database" `
+		Username string        `yaml:"username" env:"PSQL_USERNAME" env-required:"true"`
+		Password string        `yaml:"password" env:"PSQL_PASSWORD" env-required:"true"`
+		Host     string        `yaml:"host" env:"PSQL_HOST" env-required:"true"`
+		Port     int           `yaml:"port" env:"PSQL_PORT" env-required:"true"`
+		Database string        `yaml:"database" env:"PSQL_DATABASE" env-required:"true"`
 		Timeout  time.Duration `yaml:"timeout" env:"PSQL_TIMEOUT" env-required:"true"`
 		LimitMax int           `yaml:"limit-max" env:"PSQL_LIMIT_MAX" env-required:"true"`
 	} `yaml:"psql"`
 }
 
-const configPath = "./config.local.yaml"
+const configPath = "config.local.yaml"
 
 var once sync.Once
 var cfg *Config

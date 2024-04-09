@@ -33,7 +33,7 @@ http:
       - "Content-Disposition"
 
 psql:
-  host: "database"
+  host: "localhost"
   port: 5432
   username: "grandeas"
   password: "grandeas"

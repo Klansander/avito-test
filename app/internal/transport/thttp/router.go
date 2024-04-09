@@ -2,6 +2,7 @@ package thttp
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"sync"
@@ -14,7 +15,6 @@ import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 type Router struct {
@@ -94,23 +94,6 @@ func parseError(err error) (int, string) {
 
 }
 
-func abortWithStatusJSON(ctx *gin.Context, err error) {
-
-	if err != nil {
-		logrus.Error(err)
-
-		code, message := parseError(err)
-
-		if code == http.StatusInternalServerError {
-			ctx.AbortWithStatusJSON(code, gin.H{"message": "Запрос выполнен с ошибкой. Свяжитесь со службой технической поддержки."})
-		} else {
-			ctx.AbortWithStatusJSON(code, gin.H{"message": message})
-		}
-
-	}
-
-}
-
 func errorHandler() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
@@ -120,9 +103,10 @@ func errorHandler() gin.HandlerFunc {
 			code, message := parseError(err.Err)
 
 			if code == http.StatusInternalServerError {
-				c.AbortWithStatusJSON(code, gin.H{"message": "Запрос выполнен с ошибкой. Свяжитесь со службой технической поддержки."})
+
+				c.AbortWithStatusJSON(code, gin.H{"error": "Запрос выполнен с ошибкой. Свяжитесь со службой технической поддержки."})
 			} else {
-				c.AbortWithStatusJSON(code, gin.H{"message": message})
+				c.AbortWithStatusJSON(code, gin.H{"error": message})
 			}
 
 			logrus.Error(err.Err)

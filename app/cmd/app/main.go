@@ -56,7 +56,7 @@ func main() {
 	logrus.Info("Инициализация App")
 	a, err := app.New(ctx)
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Errorln(err)
 	}
 
 	// Стартуем фронт, если нужно

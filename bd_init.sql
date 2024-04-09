@@ -25,35 +25,47 @@ create table contents
 
 create unique index tag_feature on contents (tag_id, banner_id);
 
-create or replace function fn_banner_ins(i_is_active boolean, i_tag_id int[], i_feature_id int,
-                                         i_content json) returns int
+create or replace function fn_banner_ins(i_is_active bool, i_tag_id int[], i_feature_id int, i_created_at timestamp,
+                                         i_updated_at timestamp,
+                                         i_content json, out v_id int, out o_res int, out o_mes text) returns record
     language plpgsql
 as
 $$
 declare
-v_id int;
-    i    int;
-begin
 
-insert into public.banners(is_active, content)
-values (i_is_active, i_content)
+i int;
+begin
+    o_res = 0;
+    o_mes = '';
+insert into public.banners(is_active, content, created_at, updated_at)
+values (i_is_active, i_content, i_created_at, i_updated_at)
     returning id into v_id;
 
 for i in 1 .. array_length(i_tag_id, 1)
         loop
-            insert into public.contents(banner_id, tag_id, feature_id)
-            values (v_id, i_tag_id[i], i_feature_id);
+            if (select count(*)
+                from public.contents c
+                where c.tag_id = i_tag_id[i]
+                  and c.feature_id = i_feature_id) != 0
+            then
+                o_res = 1;
+                o_mes = 'Баннер i_tag_id= ' || i_tag_id::text || ', i_feature_id= ' || i_feature_id::text ||
+                        ' уже существует';
+                return;
+end if;
+insert into public.contents(banner_id, tag_id, feature_id)
+values (v_id, i_tag_id[i], i_feature_id);
 end loop;
 
 
-return v_id;
+    RETURN ;
 
-end;
+end ;
 $$;
 
 --alter function fn_banner_ins( boolean, int[], int, json, out int) owner to grandeas;
 
-create or replace function fn_banner_get(i_tag_id int, i_feature_id int, out o_json json,
+create or replace function fn_banner_get(i_tag_id int, i_feature_id int, i_is_admin bool, out o_json json,
                                          out o_res int, out o_mes text) returns record
     language plpgsql
 as
@@ -79,7 +91,8 @@ from (select b.content
       from contents
                inner join banners b on b.id = contents.banner_id
       where tag_id = i_tag_id
-        and feature_id = i_feature_id) as cb
+        and feature_id = i_feature_id
+        and (is_active = true or i_is_admin = true)) as cb
     into o_json;
 
 return;
@@ -156,7 +169,7 @@ $$;
 -- SET tag_id = 3
 
 create or replace function fn_banner_get_by_id(i_banner_id int,
-                                           out o_json json, out o_res int, out o_mes text) returns json
+                                               out o_json json, out o_res int, out o_mes text) returns record
     language plpgsql
 as
 $$

@@ -33,7 +33,6 @@ func New(ctx context.Context) (*Postgres, error) {
 
 		cfg := pc.GetConfig(ctx).PSQL
 		dsn := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s", cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
-		fmt.Println(cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
 
 		if pgxCfg, err = pgxpool.ParseConfig(dsn); err != nil {
 			err = errors.Wrap(err)

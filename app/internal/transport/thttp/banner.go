@@ -3,6 +3,7 @@ package thttp
 import (
 	"avito/internal/model"
 	"avito/pkg/errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -26,12 +27,13 @@ func (r *Router) userBanner(c *gin.Context) {
 		_ = c.Error(errors.Wrap(err))
 		return
 	}
-	data, err := r.service.Banner.UserBanner(c.Request.Context(), queryParams)
+	fmt.Println(c.MustGet("adm").(bool))
+	data, err := r.service.Banner.UserBanner(c.Request.Context(), queryParams, c.MustGet("adm").(bool))
 	if err != nil {
 		_ = c.Error(errors.Wrap(err))
 		return
 	}
-	c.JSON(200, data)
+	c.JSON(http.StatusOK, data)
 }
 
 // listBanner
@@ -56,13 +58,13 @@ func (r *Router) listBanner(c *gin.Context) {
 	}
 	_ = c.Request.Body.Close()
 
-	data, err := r.service.Banner.ListBanner(c, userBannerQuery)
+	data, err := r.service.Banner.ListBanner(c.Request.Context(), userBannerQuery)
 	if err != nil {
 		_ = c.Error(errors.Wrap(err))
 		return
 	}
 
-	c.JSON(200, data)
+	c.JSON(http.StatusOK, gin.H{"content": data})
 
 }
 
@@ -76,16 +78,25 @@ func (r *Router) listBanner(c *gin.Context) {
 // @Router			/banner [get]
 func (r *Router) createBanner(c *gin.Context) {
 
+	var err error
+
 	// Получили тело запроса и сразу его закрыли, что бы
 	// можно было получить отмену контекста.
-	var headerBanner model.HeaderBanner
-	if err := c.ShouldBindJSON(&headerBanner); err != nil {
+	var headerBanner model.NewBanner
+	//data := make(map[string]interface{}, 4)
+	if err = c.ShouldBindJSON(&headerBanner); err != nil {
 		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
 	_ = c.Request.Body.Close()
 
-	r.service.Banner.CreateBanner(c, headerBanner)
+	id, err := r.service.Banner.CreateBanner(c.Request.Context(), headerBanner)
+	if err != nil {
+		_ = c.Error(errors.Wrap(err))
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"banner_id": id})
+
 }
 
 // updateBanner
@@ -114,7 +125,11 @@ func (r *Router) updateBanner(c *gin.Context) {
 	}
 	_ = c.Request.Body.Close()
 
-	r.service.Banner.UpdateBanner(c, bannerID, headerBanner)
+	err = r.service.Banner.UpdateBanner(c.Request.Context(), bannerID, headerBanner)
+	if err != nil {
+		_ = c.Error(errors.Wrap(err))
+		return
+	}
 }
 
 // updateBanner
@@ -143,7 +158,11 @@ func (r *Router) deleteBanner(c *gin.Context) {
 	}
 	_ = c.Request.Body.Close()
 
-	mes, err := r.service.Banner.DeleteBanner(c, bannerID)
+	mes, err := r.service.Banner.DeleteBanner(c.Request.Context(), bannerID)
+	if err != nil {
+		_ = c.Error(errors.Wrap(err))
+		return
+	}
 
-	c.JSON(200, mes)
+	c.JSON(http.StatusNoContent, mes)
 }
