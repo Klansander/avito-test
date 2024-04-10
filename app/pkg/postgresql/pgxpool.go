@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	pc "avito/pkg/context"
-	"avito/pkg/errors"
+	pc "avito/app/pkg/context"
+	"avito/app/pkg/errors"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )

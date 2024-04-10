@@ -1,9 +1,8 @@
 package thttp
 
 import (
-	"avito/internal/model"
-	"avito/pkg/errors"
-	"fmt"
+	"avito/app/internal/model"
+	"avito/app/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -27,13 +26,13 @@ func (r *Router) userBanner(c *gin.Context) {
 		_ = c.Error(errors.Wrap(err))
 		return
 	}
-	fmt.Println(c.MustGet("adm").(bool))
+
 	data, err := r.service.Banner.UserBanner(c.Request.Context(), queryParams, c.MustGet("adm").(bool))
 	if err != nil {
 		_ = c.Error(errors.Wrap(err))
 		return
 	}
-	c.JSON(http.StatusOK, data)
+	c.JSON(http.StatusOK, gin.H{"content": data})
 }
 
 // listBanner
@@ -132,9 +131,9 @@ func (r *Router) updateBanner(c *gin.Context) {
 	}
 }
 
-// updateBanner
+// deleteBanner
 // @Summary			Обновление содержимого баннера
-// @BannerId		updateBanner
+// @BannerId		deleteBanner
 // @Tags			Banner - Баннеры
 // @Param			id path int true "Идентификатор баннера"
 // @Param 			data formData model.HeaderBanner true "Параметры для изменения баннера"
@@ -165,4 +164,33 @@ func (r *Router) deleteBanner(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusNoContent, mes)
+}
+
+// deleteBanner
+// @Summary			Обновление содержимого баннера
+// @BannerId		deleteBanner
+// @Tags			Banner - Баннеры
+// @Param			id path int true "Идентификатор баннера"
+// @Param 			data formData model.HeaderBanner true "Параметры для изменения баннера"
+// @Param			token header string true "Токен админа" example(admin_token)
+// @Success			200 {object} model.Banner
+// @Router			/banner/{id} [patch]
+func (r *Router) getVersionBanner(c *gin.Context) {
+
+	// Получили тело запроса и сразу его закрыли, что бы
+	// можно было получить отмену контекста.
+	var version model.BannerVersion
+	if err := c.ShouldBindQuery(&version); err != nil {
+		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
+		return
+	}
+	_ = c.Request.Body.Close()
+
+	data, err := r.service.Banner.GetVersionBanner(c.Request.Context(), version)
+	if err != nil {
+		_ = c.Error(errors.Wrap(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
 }

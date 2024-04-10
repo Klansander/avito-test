@@ -1,11 +1,11 @@
 package service
 
 import (
-	"avito/internal/model"
-	"avito/internal/repository"
-	pc "avito/pkg/context"
+	"avito/app/internal/model"
+	"avito/app/internal/repository"
+	pc "avito/app/pkg/context"
 	"context"
-	"encoding/json"
+	json "github.com/json-iterator/go"
 )
 
 type Banner interface {
@@ -14,6 +14,7 @@ type Banner interface {
 	CreateBanner(c context.Context, headerBanner model.NewBanner) (id int, err error)
 	UpdateBanner(c context.Context, bannerID int, headerBanner model.HeaderBanner) error
 	DeleteBanner(c context.Context, bannerID int) (string, error)
+	GetVersionBanner(c context.Context, headerBanner model.BannerVersion) (dataArr []model.Banner, err error)
 }
 
 type BannerService struct {
@@ -29,7 +30,11 @@ func NewBanner(r *repository.Repository) *BannerService {
 func (s *BannerService) UserBanner(c context.Context, userBannerQuery model.UserBannerQueryGet, isAdmin bool) (data map[string]interface{}, err error) {
 
 	if !userBannerQuery.UseLastRevision {
-
+		data, err = s.r.Banner.UserBannerRedis(c, userBannerQuery, isAdmin)
+		if err != nil {
+			return nil, err
+		}
+		return
 	}
 	data, err = s.r.Banner.UserBanner(c, userBannerQuery, isAdmin)
 	if err != nil {
@@ -89,4 +94,8 @@ func (s *BannerService) UpdateBanner(c context.Context, bannerID int, headerBann
 func (s *BannerService) DeleteBanner(c context.Context, bannerID int) (string, error) {
 
 	return s.r.Banner.DeleteBanner(c, bannerID)
+}
+
+func (s *BannerService) GetVersionBanner(c context.Context, headerBanner model.BannerVersion) (dataArr []model.Banner, err error) {
+	return s.r.Banner.GetVersionBanner(c, headerBanner)
 }

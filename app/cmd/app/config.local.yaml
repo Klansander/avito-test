@@ -9,7 +9,7 @@ http:
   read-header-timeout: "7s"
   re-request: "1s"
   cors:
-    debug: true
+
     allowed-methods: [ "GET", "POST", "PATCH", "PUT", "OPTIONS", "DELETE" ]
     allowed-origins:
       - "*"
@@ -31,6 +31,7 @@ http:
       - "Location"
       - "Authorization"
       - "Content-Disposition"
+    debug: true
 
 psql:
   host: "localhost"

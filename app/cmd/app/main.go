@@ -1,7 +1,7 @@
 package main
 
 import (
-	"avito/pkg/config"
+	"avito/app/pkg/config"
 	"context"
 	"os"
 	"os/signal"
@@ -10,8 +10,8 @@ import (
 	"strings"
 	"syscall"
 
-	"avito/internal/app"
-	pc "avito/pkg/context"
+	"avito/app/internal/app"
+	pc "avito/app/pkg/context"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"

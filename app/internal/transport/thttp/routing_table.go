@@ -1,7 +1,7 @@
 package thttp
 
 import (
-	"avito/internal/model"
+	"avito/app/internal/model"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,9 +9,9 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func (r *Router) setRoutingTable() {
+func (r *Router) SetRoutingTable() {
 
-	r.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.Router.GET("/swagger/index.html", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.Router.GET("/user_banner", r.authorize(model.UserToken), r.userBanner)
 	banner := r.Router.Group("/banner")
@@ -20,6 +20,8 @@ func (r *Router) setRoutingTable() {
 		banner.POST("", r.authorize(model.AdminToken), r.createBanner)
 		banner.PATCH("/:id", r.authorize(model.AdminToken), r.updateBanner)
 		banner.DELETE("/:id", r.authorize(model.AdminToken), r.deleteBanner)
+		banner.GET("/version", r.authorize(model.AdminToken), r.getVersionBanner)
+
 	}
 
 	r.Router.NoRoute(func(c *gin.Context) {

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"avito/pkg/redis"
+	"avito/app/pkg/redis"
 	"context"
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
@@ -9,13 +9,13 @@ import (
 	"net"
 	"net/http"
 
-	"avito/internal/repository"
-	"avito/internal/service"
-	"avito/internal/transport/thttp"
-	pc "avito/pkg/context"
-	"avito/pkg/cron"
-	"avito/pkg/errors"
-	"avito/pkg/postgresql"
+	"avito/app/internal/repository"
+	"avito/app/internal/service"
+	"avito/app/internal/transport/thttp"
+	pc "avito/app/pkg/context"
+	"avito/app/pkg/cron"
+	"avito/app/pkg/errors"
+	"avito/app/pkg/postgresql"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -38,10 +38,20 @@ func New(ctx context.Context) (*App, error) {
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
+
 	redClient, err := rediscl.New(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
 	repository := repository.NewRepository(pgClient, redClient)
 	service := service.NewService(repository)
+
 	cron, err := cron2.NewCron(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
 	router, err := thttp.NewRouter(ctx, service)
 	if err != nil {
 		return nil, errors.Wrap(err)

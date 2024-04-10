@@ -1,8 +1,8 @@
 package cron2
 
 import (
-	pc "avito/pkg/context"
-	e "avito/pkg/errors"
+	pc "avito/app/pkg/context"
+	e "avito/app/pkg/errors"
 	"context"
 	"github.com/go-co-op/gocron/v2"
 	"time"

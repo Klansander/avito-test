@@ -6,8 +6,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"sync"
 
-	pc "avito/pkg/context"
-	"avito/pkg/errors"
+	pc "avito/app/pkg/context"
+	"avito/app/pkg/errors"
 )
 
 type Redis struct {
@@ -15,7 +15,7 @@ type Redis struct {
 }
 
 var (
-	pgInstance *Redis
+	reInstance *Redis
 	pgOnce     sync.Once
 )
 
@@ -32,20 +32,23 @@ func New(ctx context.Context) (*Redis, error) {
 			Addr: addr,
 		})
 
-		pgInstance = &Redis{client}
+		reInstance = &Redis{client}
 
 	})
 
 	if err != nil {
 		return nil, err
 	}
-
-	return pgInstance, errors.Wrap(err)
+	_, err = reInstance.DB.Ping(ctx).Result()
+	if err != nil {
+		return nil, err
+	}
+	return reInstance, errors.Wrap(err)
 
 }
 
 func (pg *Redis) Close() {
 
-	pgInstance.DB.Close()
+	reInstance.DB.Close()
 
 }

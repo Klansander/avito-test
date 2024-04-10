@@ -7,9 +7,9 @@ import (
 	"os"
 	"sync"
 
-	"avito/internal/service"
-	pc "avito/pkg/context"
-	"avito/pkg/errors"
+	"avito/app/internal/service"
+	pc "avito/app/pkg/context"
+	"avito/app/pkg/errors"
 	//"github.com/go-playground/validator/v10"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -56,7 +56,7 @@ func NewRouter(ctx context.Context, service *service.Service) (*Router, error) {
 		return nil, err
 	}
 
-	r.setRoutingTable()
+	r.SetRoutingTable()
 
 	return r, nil
 

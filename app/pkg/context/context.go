@@ -1,14 +1,13 @@
 package context
 
 import (
-	"avito/pkg/config"
+	"avito/app/pkg/config"
 	"context"
 
 	"github.com/sirupsen/logrus"
 )
 
 type ctxConfig struct{}
-type ctxUser struct{}
 
 // AddConfig adds config to context
 func AddConfig(ctx context.Context, c *config.Config) context.Context {

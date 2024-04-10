@@ -49,7 +49,7 @@ for i in 1 .. array_length(i_tag_id, 1)
                   and c.feature_id = i_feature_id) != 0
             then
                 o_res = 1;
-                o_mes = 'Баннер i_tag_id= ' || i_tag_id::text || ', i_feature_id= ' || i_feature_id::text ||
+                o_mes = 'Баннер i_tag_id= ' || i_tag_id[i]::text || ', i_feature_id= ' || i_feature_id::text ||
                         ' уже существует';
                 return;
 end if;
@@ -58,7 +58,7 @@ values (v_id, i_tag_id[i], i_feature_id);
 end loop;
 
 
-    RETURN ;
+    RETURN;
 
 end ;
 $$;
@@ -84,16 +84,12 @@ o_mes = 'Баннер для тега не найден';
         return;
 end if;
 
-select json_build_object(
-               'content', cb.content
-       ) as p1
-from (select b.content
+select b.content
       from contents
                inner join banners b on b.id = contents.banner_id
       where tag_id = i_tag_id
         and feature_id = i_feature_id
-        and (is_active = true or i_is_admin = true)) as cb
-    into o_json;
+        and (is_active = true or i_is_admin = true)  into o_json;
 
 return;
 
@@ -168,17 +164,24 @@ $$;
 -- UPDATE banners
 -- SET tag_id = 3
 
-create or replace function fn_banner_get_by_id(i_banner_id int,
-                                               out o_json json, out o_res int, out o_mes text) returns record
+create  or replace function fn_banner_get_by_id(i_banner_id integer, OUT o_json json, OUT o_res integer, OUT o_mes text) returns record
     language plpgsql
 as
 $$
 begin
 
-    o_mes = '';
+
+
     o_res = 0;
-
-
+    o_mes = '';
+    if (select count(*)
+        from public.banners b
+        where id = i_banner_id) = 0
+    then
+        o_res = 1;
+o_mes = 'Баннер для тега не найден';
+        return;
+end if;
 select json_build_object(
                'content', cb.content,
                'tag_id', array_agg(cb.tag_id),
@@ -200,4 +203,51 @@ return;
 end;
 $$;
 
---alter function fn_banner_get_by_id(int, json, int, text) owner to grandeas;
+alter function fn_banner_get_by_id(integer, out json, out integer, out text) owner to grandeas;
+
+
+
+create or replace  function fn_banner_upd(i_banner_id integer, i_tag_id integer[], i_feature_id integer, OUT o_res integer,
+                              OUT o_mes text) returns record
+    language plpgsql
+as
+$$
+begin
+    o_res = 0;
+    o_mes = '';
+    if (select count(*)
+        from public.banners b
+        where b.id = i_banner_id) = 0
+    then
+        o_res = 1;
+o_mes = 'Баннер для тега не найден';
+        return;
+end if;
+
+delete
+from public.contents c
+where c.banner_id = i_banner_id;
+
+for i in 1 .. array_length(i_tag_id, 1)
+        loop
+            if (select count(*)
+                from public.contents c
+                where c.tag_id = i_tag_id[i]
+                  and c.feature_id = i_feature_id) != 0
+            then
+                o_res = 1;
+                o_mes = 'Баннер i_tag_id= ' || i_tag_id[i]::text || ', i_feature_id= ' || i_feature_id::text ||
+                        ' уже существует';
+                return;
+end if;
+insert into public.contents(banner_id, tag_id, feature_id)
+values (i_banner_id, i_tag_id[i], i_feature_id);
+end loop;
+
+    return;
+
+end ;
+$$;
+
+alter function fn_banner_upd(integer, integer[], integer, out integer, out text) owner to grandeas;
+

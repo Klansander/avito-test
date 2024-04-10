@@ -1,7 +1,7 @@
 package service
 
 import (
-	"avito/internal/repository"
+	"avito/app/internal/repository"
 	"sync"
 )
 

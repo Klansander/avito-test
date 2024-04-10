@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"avito/pkg/postgresql"
-	"avito/pkg/redis"
+	"avito/app/pkg/postgresql"
+	"avito/app/pkg/redis"
 	"sync"
 )
 

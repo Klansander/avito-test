@@ -21,24 +21,24 @@ type Config struct {
 		ReadHeaderTimeout time.Duration `yaml:"read-header-timeout" env:"HTTP_READ_HEADER_TIMEOUT" env-required:"true"`
 		ReRequest         time.Duration `yaml:"re-request" env:"HTTP_RE_REQUEST" env-required:"true"`
 		CORS              struct {
-			AllowedMethods     []string `yaml:"allowed_methods"`
-			AllowedOrigins     []string `yaml:"allowed_origins"`
-			AllowCredentials   bool     `yaml:"allow_credentials"`
-			AllowedHeaders     []string `yaml:"allowed_headers"`
-			OptionsPassthrough bool     `yaml:"options_passthrough"`
-			ExposedHeaders     []string `yaml:"exposed_headers"`
-			Debug              bool     `yaml:"debug"`
+			AllowedMethods     []string `yaml:"allowed-methods" env:"CORS_ALLOWED_METHODS" env-required:"true"`
+			AllowedOrigins     []string `yaml:"allowed-origins" env:"CORS_ALLOWED_ORIGINS" env-required:"true"`
+			AllowCredentials   bool     `yaml:"allow-credentials" env:"CORS_ALLOW_CREDENTIALS" env-required:"true"`
+			AllowedHeaders     []string `yaml:"allowed-headers" env:"CORS_ALLOWED_HEADERS" env-required:"true"`
+			OptionsPassthrough bool     `yaml:"options-passthrough" env:"CORS_OPTIONS_PASSTHROUGH" env-required:"true"`
+			ExposedHeaders     []string `yaml:"exposed-headers" env:"CORS_EXPOSED_HEADERS" env-required:"false"`
+			Debug              bool     `yaml:"debug" env:"CORS_DEBUG" env-required:"true"`
 		} `yaml:"cors"`
 		StartFront bool   `yaml:"start-front" env:"HTTP_START_FRONT"`
 		DistFolder string `yaml:"dist-folder" env:"HTTP_DIST_FOLDER"`
 		DistPort   int    `yaml:"dist-port" env:"HTTP_DIST_PORT"`
 	} `yaml:"http"`
 	Cron struct {
-		Interval time.Duration `yaml:"interval"`
+		Interval time.Duration `yaml:"CRON_INTERVAL"`
 	} `yaml:"cron"`
 	Redis struct {
-		Host string `yaml:"host"`
-		Port int    `yaml:"port"`
+		Host string `yaml:"host" env:"REDIS_HOST" env-required:"true"`
+		Port int    `yaml:"port" env:"REDIS_PORT" env-required:"true"`
 	} `yaml:"redis"`
 
 	PSQL struct {
@@ -64,10 +64,12 @@ func New() *Config {
 		cfg = &Config{}
 
 		if err := cleanenv.ReadConfig(configPath, cfg); err != nil {
-			helpText := "Список переменных окружения"
-			help, _ := cleanenv.GetDescription(cfg, &helpText)
-			logrus.Print(help)
-			logrus.Fatal(err)
+			if err := cleanenv.ReadEnv(cfg); err != nil {
+				helpText := "Список переменных окружения"
+				help, _ := cleanenv.GetDescription(cfg, &helpText)
+				logrus.Print(help)
+				logrus.Fatal(err)
+			}
 		}
 
 	})
