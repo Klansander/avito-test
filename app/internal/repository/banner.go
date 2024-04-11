@@ -200,7 +200,7 @@ func (r *BannerRepository) CreateBanner(c context.Context, headerBanner model.Ne
 	}
 
 	if res != 0 {
-		err = errors.New(http.StatusBadRequest, mes)
+		err = errors.New(http.StatusNotFound, mes)
 		return
 	}
 
@@ -298,7 +298,7 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 		return
 	}
 	if res != 0 {
-		err = errors.New(http.StatusBadRequest, mes)
+		err = errors.New(http.StatusNotFound, mes)
 		return
 	}
 	for k, v := range headerBanner {
@@ -477,11 +477,12 @@ func (r *BannerRepository) GetVersionBanner(c context.Context, headerBanner mode
 
 	startIndex := 0
 	stopIndex := -1
-
+	fmt.Println(headerBanner)
 	if headerBanner.Version != nil {
 		startIndex = *headerBanner.Version - 1
 		stopIndex = *headerBanner.Version - 1
 	}
+
 	result, err := r.dbR.DB.LRange(c, key, int64(startIndex), int64(stopIndex)).Result()
 	if err != nil {
 		logrus.Errorln("Ошибка при получении элементов из списка:", err)
@@ -491,15 +492,18 @@ func (r *BannerRepository) GetVersionBanner(c context.Context, headerBanner mode
 		err = errors.New(http.StatusNotFound, "Версии баннера не найдены")
 		return
 	}
-	var data model.Banner
+
 	// Вывести полученные элементы
 	for _, value := range result {
+
+		var data model.Banner
 		err = json.Unmarshal([]byte(value), &data)
 		if err != nil {
 			logrus.Errorln("Ошибка при получении элементов из списка:", err)
 			return
 		}
 		dataArr = append(dataArr, data)
+
 	}
 
 	return
@@ -535,28 +539,42 @@ func (r *BannerRepository) DeleteBannerByTagOrFeature(c context.Context, banner 
 		mes string
 	)
 
-	if err = tx.QueryRow(ctx, query, banner.TagID, banner.FeatureID).Scan(&res, &mes); err != nil {
+	if err = r.db.DB.QueryRow(ctx, query, banner.TagID, banner.FeatureID).Scan(&res, &mes); err != nil {
 		err = errors.Wrap(err)
 		return
 	}
 
 	if res != 0 {
-		err = errors.New(http.StatusBadRequest, mes)
+		err = errors.New(http.StatusNotFound, mes)
 		return
 	}
 
 	wg.Add(1)
 
-	go func() {
+	go func(c context.Context) {
 		defer wg.Done()
 
-		query = "select o_json,o_res,o_mes from public.fn_banner_del_by_tag_or_feature_id($1)"
-		if _, err = tx.Exec(ctx, query); err != nil {
-			logrus.Errorln("err")
+		tx, err := r.db.DB.Begin(context.WithoutCancel(c))
+		if err != nil {
+			logrus.Errorln("err", err)
 			return
 		}
 
-	}()
+		defer func() {
+			if err != nil {
+				_ = tx.Rollback(context.WithoutCancel(c))
+			} else {
+				_ = tx.Commit(context.WithoutCancel(c))
+			}
+		}()
+
+		query = "select  from public.fn_banner_del_by_tag_or_feature_id($1,$2)"
+		if _, err = tx.Exec(context.WithoutCancel(c), query, banner.TagID, banner.FeatureID); err != nil {
+			logrus.Errorln("err", err)
+			return
+		}
+
+	}(c)
 
 	return nil
 }

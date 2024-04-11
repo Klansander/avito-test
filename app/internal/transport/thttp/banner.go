@@ -175,7 +175,6 @@ func (r *Router) deleteBannerByTagIdOrFeatureId(c *gin.Context) {
 		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
-	_ = c.Request.Body.Close()
 
 	err := r.service.Banner.DeleteBannerByTagIdOrFeatureId(c.Request.Context(), banner, &Wg)
 	if err != nil {

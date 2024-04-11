@@ -256,13 +256,12 @@ create or replace function fn_banner_del_by_tag_or_feature_id(i_tag_id int, i_fe
    returns void as $$
 begin
 
-delete
-from banners
+delete from banners
 where id in (select c.banner_id
              from contents c
                       left join banners b on b.id = c.banner_id
-             where ($1::int is null or c.feature_id = $1::int)
-               and ($2::int is null or c.tag_id = $2::int));
+             where (i_feature_id is null or c.feature_id = i_feature_id)
+               and (i_tag_id is null or c.tag_id = i_tag_id));
 
 
 
@@ -281,8 +280,8 @@ begin
 
     if (select count(*)
         from contents c
-        where (c.tag_id = $1 or $1 is null)
-          and (c.feature_id = $2 or $2 is null)) = 0
+        where (c.tag_id = i_tag_id or i_tag_id is null)
+          and (c.feature_id = i_feature_id or i_feature_id is null)) = 0
     then
         o_res = 1;
 o_mes = 'Баннер не найден';

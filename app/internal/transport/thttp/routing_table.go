@@ -22,7 +22,7 @@ func (r *Router) SetRoutingTable() {
 		banner.POST("", r.authorize(model.AdminToken), r.createBanner)
 		banner.PATCH("/:id", r.authorize(model.AdminToken), r.updateBanner)
 		banner.DELETE("/:id", r.authorize(model.AdminToken), r.deleteBanner)
-		banner.DELETE("", r.authorize(model.AdminToken), r.deleteBannerByTagIdOrFeatureId)
+		banner.DELETE("/", r.authorize(model.AdminToken), r.deleteBannerByTagIdOrFeatureId)
 		banner.GET("/version", r.authorize(model.AdminToken), r.getVersionBanner)
 
 	}

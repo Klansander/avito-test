@@ -28,6 +28,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	s.router.Router.ServeHTTP(resp, req)
 
 	r.Equal(http.StatusCreated, resp.Result().StatusCode)
+	r.Equal(resp.Body.String(), "{\"banner_id\":1}")
 
 	//---------2-----------
 	req, _ = http.NewRequest("POST", "/banner", strings.NewReader(name))
@@ -318,5 +319,128 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	s.router.Router.ServeHTTP(resp, req)
 
 	r.Equal(http.StatusNoContent, resp.Result().StatusCode)
+
+	//--------10------------
+
+	name = fmt.Sprintf(`{
+    "tag_id":[1,2],
+    "feature_id":3,
+    "is_active": false,
+    "content": {"title": "some_title", "text": "some_text", "url": "some_url"}
+}`)
+
+	req, _ = http.NewRequest("POST", "/banner", strings.NewReader(name))
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusCreated, resp.Result().StatusCode)
+	fmt.Println(resp.Body.String())
+
+	r.Equal(resp.Body.String(), "{\"banner_id\":3}")
+
+	name = fmt.Sprintf(`{
+    "tag_id":[1,2],
+    "feature_id":4,
+    "is_active": false,
+    "content": {"title": "some_title", "text": "some_text", "url": "some_url"}
+}`)
+
+	req, _ = http.NewRequest("POST", "/banner", strings.NewReader(name))
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusCreated, resp.Result().StatusCode)
+	fmt.Println(resp.Body.String())
+
+	r.Equal(resp.Body.String(), "{\"banner_id\":4}")
+
+	name = fmt.Sprintf(`{
+    "tag_id":[3],
+    "feature_id":5,
+    "is_active": false,
+    "content": {"title": "some_title", "text": "some_text", "url": "some_url"}
+}`)
+
+	req, _ = http.NewRequest("POST", "/banner", strings.NewReader(name))
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusCreated, resp.Result().StatusCode)
+	fmt.Println(resp.Body.String())
+
+	r.Equal(resp.Body.String(), "{\"banner_id\":5}")
+
+	name = fmt.Sprintf(`{
+    "tag_id":[2],
+    "feature_id":6,
+    "is_active": false,
+    "content": {"title": "some_title", "text": "some_text", "url": "some_url"}
+}`)
+
+	req, _ = http.NewRequest("POST", "/banner", strings.NewReader(name))
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusCreated, resp.Result().StatusCode)
+	fmt.Println(resp.Body.String())
+
+	r.Equal(resp.Body.String(), "{\"banner_id\":6}")
+
+	req, _ = http.NewRequest("DELETE", "/banner/?tag_id=1", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusUnauthorized, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("DELETE", "/banner/?tag_id=1", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "user_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusForbidden, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("DELETE", "/banner/?tag_id=1", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusNoContent, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("DELETE", "/banner/?feature_id=5", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusNoContent, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("DELETE", "/banner/?feature_id=3", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusNotFound, resp.Result().StatusCode)
 
 }
