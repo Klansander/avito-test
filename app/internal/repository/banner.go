@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	json "github.com/json-iterator/go"
+	"sync"
 
 	"fmt"
 	jsonpatch "github.com/evanphx/json-patch/v5"
@@ -28,6 +29,7 @@ type Banner interface {
 	DeleteBanner(c context.Context, bannerID int) (mes string, err error)
 	SaveVersionBanner(c context.Context)
 	GetVersionBanner(c context.Context, headerBanner model.BannerVersion) (dataArr []model.Banner, err error)
+	DeleteBannerByTagOrFeature(c context.Context, banner model.BannerTagOrFeatureID, wg *sync.WaitGroup) (err error)
 }
 
 type BannerRepository struct {
@@ -45,6 +47,7 @@ func (r *BannerRepository) UserBannerRedis(c context.Context, userBannerQuery mo
 
 	valKey, err := r.dbR.DB.Get(c, fmt.Sprintf("new%d%dIsActive", userBannerQuery.TagID, userBannerQuery.FeatureID)).Bool()
 	if err != nil {
+		fmt.Println(err)
 		return nil, errors.New(http.StatusNotFound, "Баннер не найден")
 	}
 
@@ -360,7 +363,7 @@ func (r *BannerRepository) updateRedis(obj map[string]interface{}) {
 
 	jsonData, err := json.Marshal(obj)
 	if err != nil {
-		fmt.Println("Ошибка при сериализации данных:", err)
+		logrus.Errorln("Ошибка при сериализации данных:", err)
 		return
 	}
 
@@ -435,6 +438,7 @@ func (r *BannerRepository) SaveVersionBanner(c context.Context) {
 		r.saveRedis(c, item)
 
 	}
+	fmt.Println(time.Now())
 
 }
 
@@ -480,20 +484,79 @@ func (r *BannerRepository) GetVersionBanner(c context.Context, headerBanner mode
 	}
 	result, err := r.dbR.DB.LRange(c, key, int64(startIndex), int64(stopIndex)).Result()
 	if err != nil {
-		fmt.Println("Ошибка при получении элементов из списка:", err)
+		logrus.Errorln("Ошибка при получении элементов из списка:", err)
 		return
 	}
-	fmt.Println(result)
+	if len(result) == 0 {
+		err = errors.New(http.StatusNotFound, "Версии баннера не найдены")
+		return
+	}
 	var data model.Banner
 	// Вывести полученные элементы
 	for _, value := range result {
 		err = json.Unmarshal([]byte(value), &data)
 		if err != nil {
-			fmt.Println("Ошибка при получении элементов из списка:", err)
+			logrus.Errorln("Ошибка при получении элементов из списка:", err)
 			return
 		}
 		dataArr = append(dataArr, data)
 	}
 
 	return
+}
+
+func (r *BannerRepository) DeleteBannerByTagOrFeature(c context.Context, banner model.BannerTagOrFeatureID, wg *sync.WaitGroup) (err error) {
+
+	cfg := pc.GetConfig(c)
+
+	ctx, cancel := context.WithTimeout(c, cfg.PSQL.Timeout)
+	defer cancel()
+
+	query := "select o_res,o_mes from public.fn_banner_get_by_tag_or_feature_id($1, $2)"
+
+	//	i_tag_id int,
+	//	i_feature_id int,
+
+	tx, err := r.db.DB.Begin(ctx)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		} else {
+			tx.Commit(ctx)
+		}
+	}()
+
+	var (
+		res int
+		mes string
+	)
+
+	if err = tx.QueryRow(ctx, query, banner.TagID, banner.FeatureID).Scan(&res, &mes); err != nil {
+		err = errors.Wrap(err)
+		return
+	}
+
+	if res != 0 {
+		err = errors.New(http.StatusBadRequest, mes)
+		return
+	}
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		query = "select o_json,o_res,o_mes from public.fn_banner_del_by_tag_or_feature_id($1)"
+		if _, err = tx.Exec(ctx, query); err != nil {
+			logrus.Errorln("err")
+			return
+		}
+
+	}()
+
+	return nil
 }

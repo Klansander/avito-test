@@ -2,12 +2,14 @@ package thttp
 
 import (
 	"avito/app/internal/model"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"net/http"
+	"sync"
 )
+
+var Wg sync.WaitGroup
 
 func (r *Router) SetRoutingTable() {
 
@@ -20,6 +22,7 @@ func (r *Router) SetRoutingTable() {
 		banner.POST("", r.authorize(model.AdminToken), r.createBanner)
 		banner.PATCH("/:id", r.authorize(model.AdminToken), r.updateBanner)
 		banner.DELETE("/:id", r.authorize(model.AdminToken), r.deleteBanner)
+		banner.DELETE("", r.authorize(model.AdminToken), r.deleteBannerByTagIdOrFeatureId)
 		banner.GET("/version", r.authorize(model.AdminToken), r.getVersionBanner)
 
 	}
@@ -27,6 +30,10 @@ func (r *Router) SetRoutingTable() {
 	r.Router.NoRoute(func(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusNotFound, "Маршрут не найден")
 	})
+
+	go func() {
+		Wg.Wait()
+	}()
 
 }
 

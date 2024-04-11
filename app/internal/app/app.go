@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
-	"github.com/redis/go-redis/v9"
 	"net"
 	"net/http"
 
@@ -26,7 +25,7 @@ type App struct {
 	httpServer *http.Server
 	pgClient   *postgresql.Postgres
 	service    *service.Service
-	redClient  *redis.Client
+	redClient  *rediscl.Redis
 	Cron       *cron2.Cron
 	repository *repository.Repository
 }
@@ -60,6 +59,7 @@ func New(ctx context.Context) (*App, error) {
 	return &App{
 		router:     router,
 		pgClient:   pgClient,
+		redClient:  redClient,
 		service:    service,
 		Cron:       cron,
 		repository: repository,
@@ -94,7 +94,7 @@ func (a *App) Stop(ctx context.Context) {
 	logrus.Info("HTTP shutdown")
 
 	a.pgClient.Close()
-	logrus.Info("pgClient.Close")
+	a.redClient.Close()
 
 }
 

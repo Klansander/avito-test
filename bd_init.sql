@@ -85,11 +85,12 @@ o_mes = 'Баннер для тега не найден';
 end if;
 
 select b.content
-      from contents
-               inner join banners b on b.id = contents.banner_id
-      where tag_id = i_tag_id
-        and feature_id = i_feature_id
-        and (is_active = true or i_is_admin = true)  into o_json;
+from contents
+         inner join banners b on b.id = contents.banner_id
+where tag_id = i_tag_id
+  and feature_id = i_feature_id
+  and (is_active = true or i_is_admin = true)
+    into o_json;
 
 return;
 
@@ -164,12 +165,11 @@ $$;
 -- UPDATE banners
 -- SET tag_id = 3
 
-create  or replace function fn_banner_get_by_id(i_banner_id integer, OUT o_json json, OUT o_res integer, OUT o_mes text) returns record
+create or replace function fn_banner_get_by_id(i_banner_id int, OUT o_json json, OUT o_res int, OUT o_mes text) returns record
     language plpgsql
 as
 $$
 begin
-
 
 
     o_res = 0;
@@ -203,12 +203,13 @@ return;
 end;
 $$;
 
-alter function fn_banner_get_by_id(integer, out json, out integer, out text) owner to grandeas;
+alter function fn_banner_get_by_id(int, out json, out int, out text) owner to grandeas;
 
 
 
-create or replace  function fn_banner_upd(i_banner_id integer, i_tag_id integer[], i_feature_id integer, OUT o_res integer,
-                              OUT o_mes text) returns record
+create or replace function fn_banner_upd(i_banner_id int, i_tag_id int[], i_feature_id int,
+                                         OUT o_res int,
+                                         OUT o_mes text) returns record
     language plpgsql
 as
 $$
@@ -249,5 +250,47 @@ end loop;
 end ;
 $$;
 
-alter function fn_banner_upd(integer, integer[], integer, out integer, out text) owner to grandeas;
+alter function fn_banner_upd(int, int[], int, out int, out text) owner to grandeas;
 
+create or replace function fn_banner_del_by_tag_or_feature_id(i_tag_id int, i_feature_id int)
+   returns void as $$
+begin
+
+delete
+from banners
+where id in (select c.banner_id
+             from contents c
+                      left join banners b on b.id = c.banner_id
+             where ($1::int is null or c.feature_id = $1::int)
+               and ($2::int is null or c.tag_id = $2::int));
+
+
+
+end ;
+$$ language plpgsql;
+
+alter function fn_banner_del_by_tag_or_feature_id(int, int) owner to grandeas;
+
+create or replace function fn_banner_get_by_tag_or_feature_id(i_tag_id int, i_feature_id int, out o_res int,out  o_mes text) returns record
+    language plpgsql
+as
+$$
+begin
+    o_res = 0;
+    o_mes = '';
+
+    if (select count(*)
+        from contents c
+        where (c.tag_id = $1 or $1 is null)
+          and (c.feature_id = $2 or $2 is null)) = 0
+    then
+        o_res = 1;
+o_mes = 'Баннер не найден';
+end if;
+
+    return;
+
+end ;
+$$;
+
+alter function fn_banner_get_by_tag_or_feature_id(int, int, out bool) owner to grandeas;

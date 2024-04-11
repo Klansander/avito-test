@@ -23,7 +23,7 @@ func (r *Router) userBanner(c *gin.Context) {
 	// Получаем параметры из запроса
 	var queryParams model.UserBannerQueryGet
 	if err := c.ShouldBindQuery(&queryParams); err != nil {
-		_ = c.Error(errors.Wrap(err))
+		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
 
@@ -55,7 +55,6 @@ func (r *Router) listBanner(c *gin.Context) {
 		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
-	_ = c.Request.Body.Close()
 
 	data, err := r.service.Banner.ListBanner(c.Request.Context(), userBannerQuery)
 	if err != nil {
@@ -111,20 +110,21 @@ func (r *Router) updateBanner(c *gin.Context) {
 
 	bannerID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+
 		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
 
 	// Получили тело запроса и сразу его закрыли, что бы
 	// можно было получить отмену контекста.
-	var headerBanner model.HeaderBanner
-	if err := c.ShouldBindJSON(&headerBanner); err != nil {
+	var headerBanner *model.HeaderBanner
+	if err := c.ShouldBindJSON(&headerBanner); err != nil || headerBanner == nil {
 		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
 	_ = c.Request.Body.Close()
 
-	err = r.service.Banner.UpdateBanner(c.Request.Context(), bannerID, headerBanner)
+	err = r.service.Banner.UpdateBanner(c.Request.Context(), bannerID, *headerBanner)
 	if err != nil {
 		_ = c.Error(errors.Wrap(err))
 		return
@@ -148,15 +148,6 @@ func (r *Router) deleteBanner(c *gin.Context) {
 		return
 	}
 
-	// Получили тело запроса и сразу его закрыли, что бы
-	// можно было получить отмену контекста.
-	var newProject model.HeaderBanner
-	if err := c.ShouldBindJSON(&newProject); err != nil {
-		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
-		return
-	}
-	_ = c.Request.Body.Close()
-
 	mes, err := r.service.Banner.DeleteBanner(c.Request.Context(), bannerID)
 	if err != nil {
 		_ = c.Error(errors.Wrap(err))
@@ -166,9 +157,38 @@ func (r *Router) deleteBanner(c *gin.Context) {
 	c.JSON(http.StatusNoContent, mes)
 }
 
-// deleteBanner
+// deleteBannerByTagIdOrFeatureId
+// @Summary			Удаление баннера по тегу или фиче
+// @BannerId		deleteBannerByTagIdOrFeatureId
+// @Tags			Banner - Баннеры
+// @Param			id path int true "Идентификатор баннера"
+// @Param 			data formData model.HeaderBanner true "Параметры для изменения баннера"
+// @Param			token header string true "Токен админа" example(admin_token)
+// @Success			200 {object} model.Banner
+// @Router			/banner/{id} [patch]
+func (r *Router) deleteBannerByTagIdOrFeatureId(c *gin.Context) {
+
+	// Получили тело запроса и сразу его закрыли, что бы
+	// можно было получить отмену контекста.
+	var banner model.BannerTagOrFeatureID
+	if err := c.ShouldBindQuery(&banner); err != nil {
+		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
+		return
+	}
+	_ = c.Request.Body.Close()
+
+	err := r.service.Banner.DeleteBannerByTagIdOrFeatureId(c.Request.Context(), banner, &Wg)
+	if err != nil {
+		_ = c.Error(errors.Wrap(err))
+		return
+	}
+
+	c.JSON(http.StatusNoContent, "")
+}
+
+// getVersionBanner
 // @Summary			Обновление содержимого баннера
-// @BannerId		deleteBanner
+// @BannerId		getVersionBanner
 // @Tags			Banner - Баннеры
 // @Param			id path int true "Идентификатор баннера"
 // @Param 			data formData model.HeaderBanner true "Параметры для изменения баннера"

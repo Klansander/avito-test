@@ -42,3 +42,8 @@ type BannerVersion struct {
 	BannerID int  `form:"banner_id" binding:"required"`
 	Version  *int `form:"version"`
 }
+
+type BannerTagOrFeatureID struct {
+	TagID     *int `form:"tag_id"`
+	FeatureID *int `form:"feature_id"`
+}

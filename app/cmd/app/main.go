@@ -41,10 +41,6 @@ func init() {
 
 }
 
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
-// @description	Токен авторизации в формате "Bearer jwt-token"
 func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
