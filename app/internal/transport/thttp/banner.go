@@ -86,7 +86,6 @@ func (r *Router) createBanner(c *gin.Context) {
 		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
-	_ = c.Request.Body.Close()
 
 	id, err := r.service.Banner.CreateBanner(c.Request.Context(), headerBanner)
 	if err != nil {
@@ -122,7 +121,6 @@ func (r *Router) updateBanner(c *gin.Context) {
 		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
-	_ = c.Request.Body.Close()
 
 	err = r.service.Banner.UpdateBanner(c.Request.Context(), bannerID, *headerBanner)
 	if err != nil {
@@ -203,7 +201,6 @@ func (r *Router) getVersionBanner(c *gin.Context) {
 		_ = c.Error(errors.New(http.StatusBadRequest, err.Error()))
 		return
 	}
-	_ = c.Request.Body.Close()
 
 	data, err := r.service.Banner.GetVersionBanner(c.Request.Context(), version)
 	if err != nil {

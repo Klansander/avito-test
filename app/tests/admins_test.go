@@ -443,4 +443,58 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusNotFound, resp.Result().StatusCode)
 
+	req, _ = http.NewRequest("GET", "/banner/version?banner_id=1&&version=1", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusOK, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("GET", "/banner/version?banner_id=1&&version=1", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusUnauthorized, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("GET", "/banner/version?banner_id=1&&version=1", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "user_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusForbidden, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("GET", "/banner/version?banner_id=1", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusOK, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("GET", "/banner/version?banner_id=2", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusNotFound, resp.Result().StatusCode)
+
+	req, _ = http.NewRequest("GET", "/banner/version?banner_id=s", nil)
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("token", "admin_token")
+
+	resp = httptest.NewRecorder()
+	s.router.Router.ServeHTTP(resp, req)
+
+	r.Equal(http.StatusBadRequest, resp.Result().StatusCode)
+
 }

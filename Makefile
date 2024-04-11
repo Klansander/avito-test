@@ -24,6 +24,7 @@ test.integration:
 	docker-compose -f app/tests/docker-compose-test.yml build
 	docker-compose   -f app/tests/docker-compose-test.yml up -d
 	GIN_MODE=release go test  -v ./app/tests/
+	docker-compose   -f app/tests/docker-compose-test.yml down
 
 
 
