@@ -80,7 +80,7 @@ begin
           and c.feature_id = i_feature_id) = 0
     then
         o_res = 1;
-o_mes = 'Баннер для тега не найден';
+        o_mes = 'Баннер для тега не найден';
         return;
 end if;
 

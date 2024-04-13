@@ -1,6 +1,7 @@
 package thttp
 
 import (
+	"avito/app/docs"
 	"avito/app/internal/model"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -11,9 +12,10 @@ import (
 
 var Wg sync.WaitGroup
 
+// SetRoutingTable функция с маршрутами
 func (r *Router) SetRoutingTable() {
-
-	r.Router.GET("/swagger/index.html", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	docs.SwaggerInfo.BasePath = ""
+	r.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.Router.GET("/user_banner", r.authorize(model.UserToken), r.userBanner)
 	banner := r.Router.Group("/banner")
@@ -22,7 +24,7 @@ func (r *Router) SetRoutingTable() {
 		banner.POST("", r.authorize(model.AdminToken), r.createBanner)
 		banner.PATCH("/:id", r.authorize(model.AdminToken), r.updateBanner)
 		banner.DELETE("/:id", r.authorize(model.AdminToken), r.deleteBanner)
-		banner.DELETE("/", r.authorize(model.AdminToken), r.deleteBannerByTagIdOrFeatureId)
+		banner.DELETE("/", r.authorize(model.AdminToken), r.deleteBannerByTagIDOrFeatureID)
 		banner.GET("/version", r.authorize(model.AdminToken), r.getVersionBanner)
 
 	}
@@ -37,6 +39,7 @@ func (r *Router) SetRoutingTable() {
 
 }
 
+// функция авторизации
 func (r *Router) authorize(action string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
@@ -51,9 +54,6 @@ func (r *Router) authorize(action string) gin.HandlerFunc {
 
 		// Проверяем наличие прав у пользователя
 		if _isValidToken(c, token, action) {
-			if token == model.AdminToken {
-				c.Set("adm", true)
-			}
 			c.Next()
 		} else {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Пользователь не имеет доступа"})
@@ -65,13 +65,17 @@ func (r *Router) authorize(action string) gin.HandlerFunc {
 
 // Функция для проверки токена
 func _isValidToken(c *gin.Context, token string, checkToken string) bool {
-	if token == model.AdminToken {
+
+	switch token {
+	case model.AdminToken:
 		c.Set("adm", true)
-	} else if token == checkToken {
+		return true
+	case checkToken:
 		c.Set("adm", false)
-	} else {
+		return true
+	default:
 		return false
+
 	}
 
-	return true
 }

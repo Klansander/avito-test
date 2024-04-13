@@ -1,13 +1,6 @@
 package app
 
 import (
-	"avito/app/pkg/redis"
-	"context"
-	"fmt"
-	"github.com/go-co-op/gocron/v2"
-	"net"
-	"net/http"
-
 	"avito/app/internal/repository"
 	"avito/app/internal/service"
 	"avito/app/internal/transport/thttp"
@@ -15,9 +8,15 @@ import (
 	"avito/app/pkg/cron"
 	"avito/app/pkg/errors"
 	"avito/app/pkg/postgresql"
+	"avito/app/pkg/redis"
+	"context"
+	"fmt"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+	"net"
+	"net/http"
 )
 
 type App struct {
@@ -43,15 +42,15 @@ func New(ctx context.Context) (*App, error) {
 		return nil, errors.Wrap(err)
 	}
 
-	repository := repository.NewRepository(pgClient, redClient)
-	service := service.NewService(repository)
+	repositoryField := repository.NewRepository(pgClient, redClient)
+	serviceField := service.NewService(repositoryField)
 
 	cron, err := cron2.NewCron(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
 
-	router, err := thttp.NewRouter(ctx, service)
+	router, err := thttp.NewRouter(ctx, serviceField)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -60,9 +59,9 @@ func New(ctx context.Context) (*App, error) {
 		router:     router,
 		pgClient:   pgClient,
 		redClient:  redClient,
-		service:    service,
+		service:    serviceField,
 		Cron:       cron,
-		repository: repository,
+		repository: repositoryField,
 	}, nil
 
 }
@@ -75,6 +74,10 @@ func (a *App) Run(ctx context.Context) error {
 
 	g.Go(func() error {
 		return a.startHTTP(ctx)
+	})
+
+	g.Go(func() error {
+		return a.StartCron(ctx)
 	})
 
 	return g.Wait()
@@ -114,7 +117,6 @@ func (a *App) startHTTP(ctx context.Context) error {
 		AllowedHeaders:     cfg.HTTP.CORS.AllowedHeaders,
 		OptionsPassthrough: cfg.HTTP.CORS.OptionsPassthrough,
 		ExposedHeaders:     cfg.HTTP.CORS.ExposedHeaders,
-		Debug:              cfg.HTTP.CORS.Debug,
 	})
 
 	a.httpServer = &http.Server{
@@ -145,15 +147,16 @@ func (a *App) startHTTP(ctx context.Context) error {
 func (a *App) StartCron(ctx context.Context) error {
 
 	s := *a.Cron.Scheduler
+	interval := a.Cron.Interval
 
-	// add a job to the scheduler
-	_, err := s.NewJob(gocron.CronJob("5 * * * * ", false), gocron.NewTask(a.repository.Banner.SaveVersionBanner, ctx))
+	_, err := s.NewJob(gocron.DurationJob(interval), gocron.NewTask(a.repository.Banner.SaveVersionBanner, ctx))
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	// each job has a unique id
 
 	s.Start()
+
+	<-ctx.Done()
 
 	return nil
 }

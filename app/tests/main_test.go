@@ -12,7 +12,6 @@ import (
 	rediscl "avito/app/pkg/redis"
 	"context"
 
-	"net/http"
 	"os"
 	"testing"
 
@@ -23,9 +22,7 @@ import (
 
 type APITestSuite struct {
 	suite.Suite
-
 	router     *thttp.Router
-	httpServer *http.Server
 	pgClient   *postgresql.Postgres
 	service    *service.Service
 	redClient  *rediscl.Redis
@@ -59,11 +56,11 @@ func (s *APITestSuite) SetupSuite() {
 	var err error
 	s.pgClient, err = postgresql.New(ctx)
 	if err != nil {
-		s.FailNow("Failed to initialize token manager", err)
+		s.FailNow("Ошибка инициализации Postgres", err)
 	}
 	s.redClient, err = rediscl.New(ctx)
 	if err != nil {
-		s.FailNow("Failed to initialize token manager", err)
+		s.FailNow("Ошибка инициализации Redis", err)
 	}
 
 	s.initDeps()
@@ -72,24 +69,27 @@ func (s *APITestSuite) SetupSuite() {
 
 func (s *APITestSuite) TearDownSuite() {
 	s.pgClient.DB.Close()
-	s.redClient.DB.Close()
+	err := s.redClient.DB.Close()
+	if err != nil {
+		logrus.Errorln("Redis закрылся с ошибкой:", err)
+
+	}
 	s.cancel()
-	//nolint:errcheck
 }
 
 func (s *APITestSuite) initDeps() {
 
-	repository := repository.NewRepository(s.pgClient, s.redClient)
-	service := service.NewService(repository)
+	repositoryField := repository.NewRepository(s.pgClient, s.redClient)
+	serviceField := service.NewService(repositoryField)
 
-	router, err := thttp.NewRouter(s.ctx, service)
+	router, err := thttp.NewRouter(s.ctx, serviceField)
 	if err != nil {
-		s.FailNow("Failed to initialize token manager", err)
+		s.FailNow("Failed to initialize", err)
 	}
 
 	s.router = router
-	s.service = service
-	s.repository = repository
+	s.service = serviceField
+	s.repository = repositoryField
 
 }
 

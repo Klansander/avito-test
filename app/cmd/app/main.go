@@ -55,9 +55,6 @@ func main() {
 		logrus.Errorln(err)
 	}
 
-	// Стартуем фронт, если нужно
-	//	go initDistributionStatic(ctx)
-
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {

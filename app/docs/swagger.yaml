@@ -1,0 +1,318 @@
+definitions:
+  swagger.Banner:
+    properties:
+      content:
+        example: '{"title": "some_title", "text": "some_text", "url": "some_url"}'
+        format: json
+        type: string
+    type: object
+  swagger.CreateBanner:
+    properties:
+      banner_id:
+        type: integer
+    type: object
+  swagger.Error:
+    properties:
+      error:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /banner:
+    delete:
+      parameters:
+      - description: Тэг пользователя
+        in: query
+        name: tag_id
+        type: integer
+      - description: Идентификатор фичи
+        in: query
+        name: feature_id
+        type: integer
+      - description: Токен админа
+        example: admin_token
+        in: header
+        name: token
+        required: true
+        type: string
+      responses:
+        "204":
+          description: OK
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/swagger.Error'
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Пользователь не имеет доступа
+        "404":
+          description: Баннер не найден
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/swagger.Error'
+      summary: Удаление баннера по тегу или фиче
+      tags:
+      - Banner - Баннеры
+    get:
+      parameters:
+      - description: Тэг пользователя
+        in: query
+        name: tag_id
+        type: integer
+      - description: Идентификатор фичи
+        in: query
+        name: feature_id
+        type: integer
+      - description: Значение размера пачки
+        in: query
+        name: limit
+        type: integer
+      - description: Значение смещения
+        in: query
+        name: offset
+        type: integer
+      - description: Токен админа
+        example: admin_token
+        in: header
+        name: token
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/swagger.Banner'
+            type: array
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/swagger.Error'
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Пользователь не имеет доступа
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/swagger.Error'
+      summary: Получение всех баннеров c фильтрацией по фиче и/или тегу
+      tags:
+      - Banner - Баннеры
+    post:
+      parameters:
+      - example: '{"title": "some_title", "text": "some_text", "url": "some_url"}'
+        format: json
+        in: formData
+        name: content
+        type: string
+      - in: formData
+        name: feature_id
+        type: integer
+      - in: formData
+        name: is_active
+        type: boolean
+      - collectionFormat: csv
+        in: formData
+        items:
+          type: integer
+        name: tag_id
+        type: array
+      - description: Токен админа
+        example: admin_token
+        in: header
+        name: token
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Идентификатор созданного баннера
+          schema:
+            $ref: '#/definitions/swagger.CreateBanner'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/swagger.Error'
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Пользователь не имеет доступа
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/swagger.Error'
+      summary: Создание нового баннера
+      tags:
+      - Banner - Баннеры
+  /banner/{id}:
+    delete:
+      parameters:
+      - description: Идентификатор баннера
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Токен админа
+        example: admin_token
+        in: header
+        name: token
+        required: true
+        type: string
+      responses:
+        "204":
+          description: OK
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/swagger.Error'
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Пользователь не имеет доступа
+        "404":
+          description: Баннер не найден
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/swagger.Error'
+      summary: Удаление баннера по идентификатору
+      tags:
+      - Banner - Баннеры
+    patch:
+      parameters:
+      - description: Идентификатор баннера
+        in: path
+        name: id
+        required: true
+        type: integer
+      - example: '{"title": "some_title", "text": "some_text", "url": "some_url"}'
+        format: json
+        in: formData
+        name: content
+        type: string
+      - in: formData
+        name: feature_id
+        type: integer
+      - in: formData
+        name: is_active
+        type: boolean
+      - collectionFormat: csv
+        in: formData
+        items:
+          type: integer
+        name: tag_id
+        type: array
+      - description: Токен админа
+        example: admin_token
+        in: header
+        name: token
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/swagger.Error'
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Пользователь не имеет доступа
+        "404":
+          description: Баннер не найден
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/swagger.Error'
+      summary: Обновление содержимого баннера
+      tags:
+      - Banner - Баннеры
+  /banner/version:
+    get:
+      parameters:
+      - description: Тэг пользователя
+        in: query
+        name: banner_id
+        required: true
+        type: integer
+      - description: Версия баннера
+        in: query
+        name: version
+        type: integer
+      - description: Токен админа
+        example: admin_token
+        in: header
+        name: token
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/swagger.Banner'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/swagger.Error'
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Пользователь не имеет доступа
+        "404":
+          description: Баннер не найден
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/swagger.Error'
+      summary: Получение версий баннера
+      tags:
+      - Banner - Баннеры
+  /user_banner:
+    get:
+      parameters:
+      - description: Тэг пользователя
+        in: query
+        name: tag_id
+        required: true
+        type: integer
+      - description: Идентификатор фичи
+        in: query
+        name: feature_id
+        required: true
+        type: integer
+      - description: Получать актуальную информацию
+        in: query
+        name: use_last_revision
+        type: boolean
+      - description: Токен пользователя
+        example: user_token
+        in: header
+        name: token
+        type: string
+      responses:
+        "200":
+          description: Баннер пользователя
+          schema:
+            $ref: '#/definitions/swagger.Banner'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/swagger.Error'
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Пользователь не имеет доступа
+        "404":
+          description: Баннер не найден
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/swagger.Error'
+      summary: Получение баннера для пользователя
+      tags:
+      - Banner - Баннеры
+swagger: "2.0"

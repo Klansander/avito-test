@@ -2,7 +2,6 @@ package thttp
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"sync"
@@ -10,32 +9,28 @@ import (
 	"avito/app/internal/service"
 	pc "avito/app/pkg/context"
 	"avito/app/pkg/errors"
-	//"github.com/go-playground/validator/v10"
 
-	jwt "github.com/appleboy/gin-jwt/v2"
-	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 )
 
 type Router struct {
-	service  *service.Service
-	enforcer *casbin.Enforcer
-	jwt      *jwt.GinJWTMiddleware
-	Router   *gin.Engine
+	service *service.Service
+	Router  *gin.Engine
 }
 
 var once sync.Once
 var r *Router
 
+// NewRouter Инициализация роутера
 func NewRouter(ctx context.Context, service *service.Service) (*Router, error) {
 
 	var err error
 	once.Do(func() {
 		r = &Router{service: service}
+		gin.SetMode(gin.ReleaseMode)
+
 		r.Router = gin.New()
 		r.Router.Routes()
-
-		gin.SetMode(gin.ReleaseMode)
 
 		r.Router.Use(gin.LoggerWithConfig(gin.LoggerConfig{
 			Output: os.Stdout,
@@ -66,11 +61,6 @@ func transferParentContext(ctx context.Context) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		// parent.ContextWithParentContext(ctx, ctxParent)
-		// ctx.Next()
-		// WithContext возвращает поверхностную копию контекста.
-		// Возможно нужно использовать NewRequestWithContext или
-		// чтобы сделать глубокую копию запроса с новым контекстом, Request.Clone.
 		ctxMegge := pc.Link(c.Request.Context(), ctx)
 		c.Request = c.Request.WithContext(ctxMegge)
 		c.Next()
@@ -109,7 +99,6 @@ func errorHandler() gin.HandlerFunc {
 				c.AbortWithStatusJSON(code, gin.H{"error": message})
 			}
 
-			logrus.Error(err.Err)
 		}
 	}
 

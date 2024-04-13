@@ -1,0 +1,481 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/banner": {
+            "get": {
+                "tags": [
+                    "Banner - Баннеры"
+                ],
+                "summary": "Получение всех баннеров c фильтрацией по фиче и/или тегу",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Тэг пользователя",
+                        "name": "tag_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Идентификатор фичи",
+                        "name": "feature_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Значение размера пачки",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Значение смещения",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "admin_token",
+                        "description": "Токен админа",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/swagger.Banner"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Пользователь не имеет доступа"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Banner - Баннеры"
+                ],
+                "summary": "Создание нового баннера",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "json",
+                        "example": "{\"title\": \"some_title\", \"text\": \"some_text\", \"url\": \"some_url\"}",
+                        "name": "content",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "feature_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "is_active",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "tag_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "example": "admin_token",
+                        "description": "Токен админа",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Идентификатор созданного баннера",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.CreateBanner"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Пользователь не имеет доступа"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Banner - Баннеры"
+                ],
+                "summary": "Удаление баннера по тегу или фиче",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Тэг пользователя",
+                        "name": "tag_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Идентификатор фичи",
+                        "name": "feature_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "admin_token",
+                        "description": "Токен админа",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Пользователь не имеет доступа"
+                    },
+                    "404": {
+                        "description": "Баннер не найден"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/banner/version": {
+            "get": {
+                "tags": [
+                    "Banner - Баннеры"
+                ],
+                "summary": "Получение версий баннера",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Тэг пользователя",
+                        "name": "banner_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Версия баннера",
+                        "name": "version",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "admin_token",
+                        "description": "Токен админа",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Banner"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Пользователь не имеет доступа"
+                    },
+                    "404": {
+                        "description": "Баннер не найден"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/banner/{id}": {
+            "delete": {
+                "tags": [
+                    "Banner - Баннеры"
+                ],
+                "summary": "Удаление баннера по идентификатору",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Идентификатор баннера",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "admin_token",
+                        "description": "Токен админа",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Пользователь не имеет доступа"
+                    },
+                    "404": {
+                        "description": "Баннер не найден"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Banner - Баннеры"
+                ],
+                "summary": "Обновление содержимого баннера",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Идентификатор баннера",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "json",
+                        "example": "{\"title\": \"some_title\", \"text\": \"some_text\", \"url\": \"some_url\"}",
+                        "name": "content",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "feature_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "is_active",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "tag_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "example": "admin_token",
+                        "description": "Токен админа",
+                        "name": "token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Пользователь не имеет доступа"
+                    },
+                    "404": {
+                        "description": "Баннер не найден"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/user_banner": {
+            "get": {
+                "tags": [
+                    "Banner - Баннеры"
+                ],
+                "summary": "Получение баннера для пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Тэг пользователя",
+                        "name": "tag_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Идентификатор фичи",
+                        "name": "feature_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Получать актуальную информацию",
+                        "name": "use_last_revision",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "user_token",
+                        "description": "Токен пользователя",
+                        "name": "token",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Баннер пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Banner"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Пользователь не имеет доступа"
+                    },
+                    "404": {
+                        "description": "Баннер не найден"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/swagger.Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "swagger.Banner": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "format": "json",
+                    "example": "{\"title\": \"some_title\", \"text\": \"some_text\", \"url\": \"some_url\"}"
+                }
+            }
+        },
+        "swagger.CreateBanner": {
+            "type": "object",
+            "properties": {
+                "banner_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "swagger.Error": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

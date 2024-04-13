@@ -31,10 +31,10 @@ http:
       - "Location"
       - "Authorization"
       - "Content-Disposition"
-    debug: true
+
 
 psql:
-  host: "localhost"
+  host: "database"
   port: 5432
   username: "grandeas"
   password: "grandeas"
@@ -43,9 +43,13 @@ psql:
   limit-max: 1000
 
 cron:
-  interval: '1s'
+  interval: '5m'
+
 
 redis:
-  host: "localhost"
+  host: "redis"
   port: 6379
+  ttl: "5m"
+  len-stack: 3
+  timeout: "2s"
 

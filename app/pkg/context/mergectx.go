@@ -1,5 +1,3 @@
-// Package mergectx provides a utility for merging two context.Context objects,
-// creating a child context that contains the union of both context's values.
 package context
 
 import (
@@ -20,16 +18,6 @@ func newCtx(c0, c1 context.Context) *cx {
 	return &cx{c0: c0, c1: c1, cq: make(chan struct{})}
 }
 
-// Link returns new context which is the child of child of two parents.  It is
-// analogous to ctx.Link
-//
-// Done() channel is closed when one of parents contexts is done.
-//
-// Deadline() returns earliest deadline between parent contexts.
-//
-// Err() returns error from first done parent context.
-//
-// Value(key) looks for key in parent contexts. First found is returned.
 func Link(c0, c1 context.Context) context.Context {
 	c := newCtx(c0, c1)
 	c.dlFunc = c.first

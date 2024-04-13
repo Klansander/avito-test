@@ -27,18 +27,20 @@ type Config struct {
 			AllowedHeaders     []string `yaml:"allowed-headers" env:"CORS_ALLOWED_HEADERS" env-required:"true"`
 			OptionsPassthrough bool     `yaml:"options-passthrough" env:"CORS_OPTIONS_PASSTHROUGH" env-required:"true"`
 			ExposedHeaders     []string `yaml:"exposed-headers" env:"CORS_EXPOSED_HEADERS" env-required:"false"`
-			Debug              bool     `yaml:"debug" env:"CORS_DEBUG" env-required:"true"`
 		} `yaml:"cors"`
 		StartFront bool   `yaml:"start-front" env:"HTTP_START_FRONT"`
 		DistFolder string `yaml:"dist-folder" env:"HTTP_DIST_FOLDER"`
 		DistPort   int    `yaml:"dist-port" env:"HTTP_DIST_PORT"`
 	} `yaml:"http"`
 	Cron struct {
-		Interval time.Duration `yaml:"CRON_INTERVAL"`
+		Interval time.Duration `yaml:"interval" env:"CRON_INTERVAL"`
 	} `yaml:"cron"`
 	Redis struct {
-		Host string `yaml:"host" env:"REDIS_HOST" env-required:"true"`
-		Port int    `yaml:"port" env:"REDIS_PORT" env-required:"true"`
+		Host     string        `yaml:"host" env:"REDIS_HOST" env-required:"true"`
+		Port     int           `yaml:"port" env:"REDIS_PORT" env-required:"true"`
+		TTL      time.Duration `yaml:"ttl" env:"REDIS_TTL"`
+		LenStack int64         `yaml:"len-stack" env:"REDIS_LEN_STACK" env-required:"true"`
+		Timeout  time.Duration `yaml:"timeout" env:"REDIS_TIMEOUT" env-required:"true"`
 	} `yaml:"redis"`
 
 	PSQL struct {
@@ -65,10 +67,12 @@ func New() *Config {
 
 		if err := cleanenv.ReadConfig(configPath, cfg); err != nil {
 			if err := cleanenv.ReadEnv(cfg); err != nil {
+				logrus.Fatal(err)
 				helpText := "Список переменных окружения"
-				help, _ := cleanenv.GetDescription(cfg, &helpText)
+				help, err := cleanenv.GetDescription(cfg, &helpText)
 				logrus.Print(help)
 				logrus.Fatal(err)
+
 			}
 		}
 

@@ -16,7 +16,7 @@ type Banner interface {
 	UpdateBanner(c context.Context, bannerID int, headerBanner model.HeaderBanner) error
 	DeleteBanner(c context.Context, bannerID int) (string, error)
 	GetVersionBanner(c context.Context, headerBanner model.BannerVersion) (dataArr []model.Banner, err error)
-	DeleteBannerByTagIdOrFeatureId(c context.Context, banner model.BannerTagOrFeatureID, wg *sync.WaitGroup) (err error)
+	DeleteBannerByTagIDOrFeatureID(c context.Context, banner model.BannerTagOrFeatureID, wg *sync.WaitGroup) (err error)
 }
 
 type BannerService struct {
@@ -48,6 +48,7 @@ func (s *BannerService) UserBanner(c context.Context, userBannerQuery model.User
 
 func (s *BannerService) ListBanner(c context.Context, userBannerQuery model.UserBannerQueryList) (data []model.Banner, err error) {
 
+	// Если поля не выставлены, ставим значения по умолчанию
 	if userBannerQuery.Limit == nil || *userBannerQuery.Limit <= 0 {
 		cfg := pc.GetConfig(c)
 		userBannerQuery.Limit = &cfg.PSQL.LimitMax
@@ -99,6 +100,6 @@ func (s *BannerService) DeleteBanner(c context.Context, bannerID int) (string, e
 func (s *BannerService) GetVersionBanner(c context.Context, headerBanner model.BannerVersion) (dataArr []model.Banner, err error) {
 	return s.r.Banner.GetVersionBanner(c, headerBanner)
 }
-func (s *BannerService) DeleteBannerByTagIdOrFeatureId(c context.Context, banner model.BannerTagOrFeatureID, wg *sync.WaitGroup) (err error) {
+func (s *BannerService) DeleteBannerByTagIDOrFeatureID(c context.Context, banner model.BannerTagOrFeatureID, wg *sync.WaitGroup) (err error) {
 	return s.r.Banner.DeleteBannerByTagOrFeature(c, banner, wg)
 }

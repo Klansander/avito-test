@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"sync"
 
 	pc "avito/app/pkg/context"
@@ -49,6 +50,9 @@ func New(ctx context.Context) (*Redis, error) {
 
 func (pg *Redis) Close() {
 
-	reInstance.DB.Close()
+	err := reInstance.DB.Close()
+	if err != nil {
+		logrus.Errorln("Ошибка при закрытии соединения Redis: ", err)
+	}
 
 }

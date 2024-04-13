@@ -46,12 +46,7 @@ func NewBanner(db *postgresql.Postgres, dbR *rediscl.Redis) *BannerRepository {
 func (r *BannerRepository) UserBannerRedis(c context.Context, userBannerQuery model.UserBannerQueryGet, isAdmin bool) (data map[string]interface{}, err error) {
 
 	valKey, err := r.dbR.DB.Get(c, fmt.Sprintf("new%d%dIsActive", userBannerQuery.TagID, userBannerQuery.FeatureID)).Bool()
-	if err != nil {
-		fmt.Println(err)
-		return nil, errors.New(http.StatusNotFound, "Баннер не найден")
-	}
-
-	if !valKey && !isAdmin {
+	if err != nil || !valKey && !isAdmin {
 		return nil, errors.New(http.StatusNotFound, "Баннер не найден")
 	}
 
@@ -83,9 +78,9 @@ func (r *BannerRepository) UserBanner(c context.Context, userBannerQuery model.U
 	query := "select o_json,o_res,o_mes from public.fn_banner_get($1, $2,$3)"
 
 	// i_tag_id int,
-	//i_feature_id int,
-	//i_is_admin bool,
-	//out o_json json,
+	// i_feature_id int,
+	// i_is_admin bool,
+	// out o_json json,
 	//	out o_res int,
 	//	out o_mes text
 
@@ -94,16 +89,14 @@ func (r *BannerRepository) UserBanner(c context.Context, userBannerQuery model.U
 
 		return
 	}
-	if res != 0 {
+	if res != 0 || row.Valid {
 		err = errors.New(http.StatusNotFound, mes)
 		return
 	}
 
-	if row.Valid {
-		if err = json.Unmarshal([]byte(row.String), &data); err != nil {
-			err = errors.Wrap(err)
-			return
-		}
+	if err = json.Unmarshal([]byte(row.String), &data); err != nil {
+		err = errors.Wrap(err)
+		return
 	}
 
 	return
@@ -121,11 +114,11 @@ func (r *BannerRepository) ListBanner(c context.Context, userBannerQuery model.U
 
 	query := "select o_json from public.fn_banner_list($1, $2, $3, $4)"
 
-	//i_tag_id int,
-	//i_feature_id int,
-	//i_limit int,
-	//i_offset int,
-	//	out o_json json
+	// i_tag_id int,
+	// i_feature_id int,
+	// i_limit int,
+	// i_offset int,
+	// out o_json json
 
 	if err = r.db.DB.QueryRow(ctx, query, userBannerQuery.TagID, userBannerQuery.FeatureID, userBannerQuery.Limit, userBannerQuery.Offset).Scan(&row); err != nil {
 		err = errors.Wrap(err)
@@ -160,8 +153,11 @@ func (r *BannerRepository) CreateBanner(c context.Context, headerBanner model.Ne
 	//	i_feature_id int,
 	//	i_created_at timestamp,
 	//	i_updated_at timestamp
-	//	i_content json)
-	//	returns int
+	//	i_content json
+	//	id int
+	//  o_res int
+	// 	o_mes text
+	//	)
 
 	tx, err := r.db.DB.Begin(ctx)
 	if err != nil {
@@ -169,11 +165,7 @@ func (r *BannerRepository) CreateBanner(c context.Context, headerBanner model.Ne
 	}
 
 	defer func() {
-		if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			tx.Commit(ctx)
-		}
+		txTransaction(c, tx, err)
 	}()
 
 	var (
@@ -185,35 +177,35 @@ func (r *BannerRepository) CreateBanner(c context.Context, headerBanner model.Ne
 
 	if err = tx.QueryRow(ctx, query, headerBanner.IsActive, headerBanner.TagID, headerBanner.FeatureID, time.Now(), time.Now(), headerBanner.Content).Scan(&id, &res, &mes); err != nil {
 		err = errors.Wrap(err)
-		return
+		return id, err
 	}
 
 	if res != 0 {
 		err = errors.New(http.StatusBadRequest, mes)
-		return
+		return id, err
 	}
 
 	query = "select o_json,o_res,o_mes from public.fn_banner_get_by_id($1)"
 	if err = tx.QueryRow(ctx, query, id).Scan(&row, &res, &mes); err != nil {
 		err = errors.Wrap(err)
-		return
+		return id, err
 	}
 
 	if res != 0 {
 		err = errors.New(http.StatusNotFound, mes)
-		return
+		return id, err
 	}
 
 	if row.Valid {
 		if err = json.Unmarshal([]byte(row.String), &data); err != nil {
 			err = errors.Wrap(err)
-			return
+			return id, err
 		}
 	}
 
 	r.saveRedis(c, data)
 
-	return
+	return id, err
 
 }
 
@@ -234,27 +226,24 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 
 	//	(i_banner_id int,
 	//	out o_res int,
-	//	out o_mes text)
+	//	out o_mes text
+	//	out o_json json
+	//	)
 
 	if err = r.db.DB.QueryRow(ctx, query, bannerID).Scan(&row, &res, &mes); err != nil {
-		err = errors.Wrap(err)
-		return
+		return errors.Wrap(err)
 	}
 	if res != 0 {
-		err = errors.New(http.StatusNotFound, mes)
-		return
+		return errors.New(http.StatusNotFound, mes)
 	}
 
 	if row.Valid {
 		if err = json.Unmarshal([]byte(row.String), &data); err != nil {
-			err = errors.Wrap(err)
-			return
+			return errors.Wrap(err)
 		}
 	}
-	r.updateRedis(data)
-	if err != nil {
-		return errors.Wrap(err)
-	}
+
+	r.updateRedis(c, data)
 
 	tx, err := r.db.DB.Begin(ctx)
 	if err != nil {
@@ -262,24 +251,20 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 	}
 
 	defer func() {
-		if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			tx.Commit(ctx)
-		}
+		txTransaction(c, tx, err)
 	}()
 
-	if _, ok := headerBanner["tag_id"]; ok == false {
+	if _, ok := headerBanner[model.FieldTagID]; !ok {
 		for k, v := range headerBanner {
-			if k == "feature_id" {
+			if k == model.FieldFeatureID {
 
-				if err = r.updateBanner(c, tx, bannerID, k, "banner_id", "contents", v); err != nil {
+				if err = r.updateBanner(c, tx, bannerID, k, model.FieldBannerID, model.TableContents, v); err != nil {
 					return errors.Wrap(err)
 				}
 				continue
 			}
 
-			if err = r.updateBanner(c, tx, bannerID, k, "id", "banners", v); err != nil {
+			if err = r.updateBanner(c, tx, bannerID, k, model.FieldID, model.TableBanners, v); err != nil {
 				return errors.Wrap(err)
 			}
 
@@ -293,17 +278,23 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 	}
 
 	query = "select o_res,o_mes from public.fn_banner_upd($1,$2,$3)"
+
+	//	i_banner_id int,
+	//	i_tag_id int,
+	//	i_feature_id int,
+	//	out o_res int,
+	//	out o_mes text)
+
 	if err = tx.QueryRow(ctx, query, bannerID, updateBanner.TagID, updateBanner.FeatureID).Scan(&res, &mes); err != nil {
-		err = errors.Wrap(err)
-		return
+		return errors.Wrap(err)
 	}
 	if res != 0 {
-		err = errors.New(http.StatusNotFound, mes)
-		return
+		return errors.New(http.StatusNotFound, mes)
 	}
+
 	for k, v := range headerBanner {
-		if k == "content" || k == "is_active" {
-			if err = r.updateBanner(c, tx, bannerID, "id", k, "banners", v); err != nil {
+		if k == model.FieldContent || k == model.FieldIsActive {
+			if err = r.updateBanner(c, tx, bannerID, model.FieldID, k, model.TableBanners, v); err != nil {
 				return errors.Wrap(err)
 			}
 		}
@@ -314,7 +305,7 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 
 }
 
-func (s *BannerRepository) updateBanner(ctx context.Context, tx pgx.Tx, bannerID int, whereField string, field string, table string, value interface{}) error {
+func (r *BannerRepository) updateBanner(ctx context.Context, tx pgx.Tx, bannerID int, whereField string, field string, table string, value interface{}) error {
 
 	query := fmt.Sprintf(
 		"update public.%s "+
@@ -325,14 +316,15 @@ func (s *BannerRepository) updateBanner(ctx context.Context, tx pgx.Tx, bannerID
 	)
 
 	if _, err := tx.Exec(ctx, query, value, time.Now(), bannerID); err != nil {
-		return err
+		return errors.Wrap(err)
 	}
 
 	return nil
 
 }
 
-func _mergeData(dataOld map[string]interface{}, dataNew map[string]interface{}) (model.Banner, error) {
+func _mergeData(dataOld map[string]interface{}, dataNew map[string]interface{}) (res model.Banner, err error) {
+
 	getByte, err := json.Marshal(dataOld)
 	if err != nil {
 		return model.Banner{}, errors.Wrap(err)
@@ -347,18 +339,20 @@ func _mergeData(dataOld map[string]interface{}, dataNew map[string]interface{}) 
 	if err != nil {
 		return model.Banner{}, errors.Wrap(err)
 	}
-	var res model.Banner
 
-	if err := json.Unmarshal(resByte, &res); err != nil {
+	if err = json.Unmarshal(resByte, &res); err != nil {
 		return model.Banner{}, errors.Wrap(err)
 	}
+
 	return res, nil
 
 }
 
-func (r *BannerRepository) updateRedis(obj map[string]interface{}) {
+func (r *BannerRepository) updateRedis(c context.Context, obj map[string]interface{}) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	cfg := pc.GetConfig(c)
+
+	ctx, cancel := context.WithTimeout(c, cfg.Redis.Timeout)
 	defer cancel()
 
 	jsonData, err := json.Marshal(obj)
@@ -367,20 +361,20 @@ func (r *BannerRepository) updateRedis(obj map[string]interface{}) {
 		return
 	}
 
-	err = r.dbR.DB.LPush(ctx, strconv.Itoa(int(obj["banner_id"].(float64))), jsonData).Err()
+	err = r.dbR.DB.LPush(ctx, strconv.Itoa(int(obj[model.FieldBannerID].(float64))), jsonData).Err()
 	if err != nil {
 		logrus.Errorln("Ошибка при добавлении новой версии:", err)
 		return
 	}
 
-	listLen, err := r.dbR.DB.LLen(ctx, strconv.Itoa(int(obj["banner_id"].(float64)))).Result()
+	listLen, err := r.dbR.DB.LLen(ctx, strconv.Itoa(int(obj[model.FieldBannerID].(float64)))).Result()
 	if err != nil {
 		logrus.Errorln("Ошибка при получении длины списка:", err)
 		return
 	}
 
-	if listLen > 3 {
-		err := r.dbR.DB.RPop(ctx, strconv.Itoa(int(obj["banner_id"].(float64)))).Err()
+	if listLen > cfg.Redis.LenStack {
+		err := r.dbR.DB.RPop(ctx, strconv.Itoa(int(obj[model.FieldBannerID].(float64)))).Err()
 		if err != nil {
 			logrus.Errorln("Ошибка при удалении старой версии:", err)
 			return
@@ -409,11 +403,7 @@ func (r *BannerRepository) DeleteBanner(c context.Context, bannerID int) (mes st
 	}
 
 	defer func() {
-		if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			tx.Commit(ctx)
-		}
+		txTransaction(c, tx, err)
 	}()
 
 	if err = tx.QueryRow(ctx, query, bannerID).Scan(&res, &mes); err != nil {
@@ -434,20 +424,22 @@ func (r *BannerRepository) SaveVersionBanner(c context.Context) {
 		logrus.Errorln("Ошибка добавления объекта в Redis:", err)
 		return
 	}
+
 	for _, item := range data {
 		r.saveRedis(c, item)
 
 	}
-	fmt.Println(time.Now())
 
 }
 
 func (r *BannerRepository) saveRedis(c context.Context, item model.Banner) {
+	cfg := pc.GetConfig(c)
+	fmt.Println(cfg.Redis.TTL)
 
-	for _, tagId := range item.TagID {
+	for _, tagID := range item.TagID {
 
-		key := fmt.Sprintf("new%d%d", tagId, item.FeatureID)
-		keyActive := fmt.Sprintf("new%d%dIsActive", tagId, item.FeatureID)
+		key := fmt.Sprintf("new%d%d", tagID, item.FeatureID)
+		keyActive := fmt.Sprintf("new%d%dIsActive", tagID, item.FeatureID)
 
 		jsonData, err := json.Marshal(item.Content)
 		if err != nil {
@@ -455,12 +447,12 @@ func (r *BannerRepository) saveRedis(c context.Context, item model.Banner) {
 			return
 		}
 
-		err = r.dbR.DB.Set(c, key, jsonData, 5*time.Minute).Err()
+		err = r.dbR.DB.Set(c, key, jsonData, cfg.Redis.TTL).Err()
 		if err != nil {
 			logrus.Errorln("Ошибка добавления объекта в Redis:", err)
 			return
 		}
-		err = r.dbR.DB.Set(c, keyActive, item.IsActive, 5*time.Minute).Err()
+		err = r.dbR.DB.Set(c, keyActive, item.IsActive, cfg.Redis.TTL).Err()
 		if err != nil {
 			logrus.Errorln("Ошибка добавления объекта в Redis:", err)
 			return
@@ -499,7 +491,7 @@ func (r *BannerRepository) GetVersionBanner(c context.Context, headerBanner mode
 		var data model.Banner
 		err = json.Unmarshal([]byte(value), &data)
 		if err != nil {
-			logrus.Errorln("Ошибка при получении элементов из списка:", err)
+			logrus.Errorln("Ошибка при Unmarshal:", err)
 			return
 		}
 		dataArr = append(dataArr, data)
@@ -520,19 +512,8 @@ func (r *BannerRepository) DeleteBannerByTagOrFeature(c context.Context, banner 
 
 	//	i_tag_id int,
 	//	i_feature_id int,
-
-	tx, err := r.db.DB.Begin(ctx)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	defer func() {
-		if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			tx.Commit(ctx)
-		}
-	}()
+	//	out o_res int,
+	//	out o_mes text)
 
 	var (
 		res int
@@ -540,41 +521,52 @@ func (r *BannerRepository) DeleteBannerByTagOrFeature(c context.Context, banner 
 	)
 
 	if err = r.db.DB.QueryRow(ctx, query, banner.TagID, banner.FeatureID).Scan(&res, &mes); err != nil {
-		err = errors.Wrap(err)
-		return
+
+		return errors.Wrap(err)
 	}
 
 	if res != 0 {
-		err = errors.New(http.StatusNotFound, mes)
-		return
+
+		return errors.New(http.StatusNotFound, mes)
 	}
 
 	wg.Add(1)
 
 	go func(c context.Context) {
 		defer wg.Done()
-
-		tx, err := r.db.DB.Begin(context.WithoutCancel(c))
+		ctx := context.WithoutCancel(c)
+		tx, err := r.db.DB.Begin(ctx)
 		if err != nil {
 			logrus.Errorln("err", err)
 			return
 		}
 
 		defer func() {
-			if err != nil {
-				_ = tx.Rollback(context.WithoutCancel(c))
-			} else {
-				_ = tx.Commit(context.WithoutCancel(c))
-			}
+			txTransaction(ctx, tx, err)
 		}()
 
 		query = "select  from public.fn_banner_del_by_tag_or_feature_id($1,$2)"
-		if _, err = tx.Exec(context.WithoutCancel(c), query, banner.TagID, banner.FeatureID); err != nil {
-			logrus.Errorln("err", err)
+		if _, err = tx.Exec(ctx, query, banner.TagID, banner.FeatureID); err != nil {
+			logrus.Errorln("Ошибка при удалении по тегу или фиче", err)
 			return
 		}
 
 	}(c)
 
 	return nil
+}
+func txTransaction(c context.Context, tx pgx.Tx, err error) {
+
+	if err != nil {
+		errRollback := tx.Rollback(c)
+		if err != nil {
+			logrus.Errorln("Ошибка отката тразакции", errRollback)
+		}
+	} else {
+		errCommit := tx.Commit(c)
+		if err != nil {
+			logrus.Errorln("Ошибка коммита тразакции", errCommit)
+		}
+	}
+
 }

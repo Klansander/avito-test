@@ -1,7 +1,7 @@
 
 .PHONY: help build up down clean
 
-all: clean build up
+all: clean swag build up
 
 # Описание целей
 help: ## Отображает список доступных команд
@@ -13,7 +13,8 @@ build: ## Собирает приложения с помощью Docker Compose
 
 up: ## Запускает приложения с помощью Docker Compose
 	docker-compose up -d
-
+swag:
+	swag init -g ./app/cmd/app/main.go -o ./app/docs
 down: ## Останавливает приложения
 	docker-compose down
 
@@ -25,6 +26,8 @@ test.integration:
 	docker-compose   -f app/tests/docker-compose-test.yml up -d
 	GIN_MODE=release go test  -v ./app/tests/
 	docker-compose   -f app/tests/docker-compose-test.yml down
+lint:
+	golang-lint
 
 
 
