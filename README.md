@@ -1,5 +1,5 @@
 [![Golang](https://img.shields.io/badge/Go-v1.22-EEEEEE?logo=go&logoColor=white&labelColor=00ADD8)](https://go.dev/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 
 <div align="center">
     <h1>Сервис баннеров</h1>
