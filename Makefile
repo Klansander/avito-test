@@ -23,7 +23,7 @@ down: ## Останавливает приложения
 clean: ## Останавливает и удаляет все контейнеры и тома
 	docker-compose down -v --remove-orphans
 
-test.integration: ## Запуск тестов
+test: ## Запуск тестов
 	docker-compose   -f app/tests/docker-compose-test.yml down
 	docker-compose -f app/tests/docker-compose-test.yml build
 	docker-compose   -f app/tests/docker-compose-test.yml up -d
