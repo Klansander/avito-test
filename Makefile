@@ -1,7 +1,7 @@
 
 .PHONY: help build up down clean
 
-all: clean swag build up
+all:  swag build up
 
 # Описание целей
 help: ## Отображает список доступных команд
@@ -32,8 +32,3 @@ test.integration: ## Запуск тестов
 lint: ## Запуск линтера
 	golangci-lint -c .golangci.yml run ./app/...
 
-
-
-
-#	GIN_MODE=release go test -v ./tests/
-#	docker-compose down -v --remove-orphans

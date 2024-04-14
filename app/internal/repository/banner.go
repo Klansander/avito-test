@@ -255,6 +255,7 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 		txTransaction(c, tx, err)
 	}()
 
+	// если тэга нет, то делаем только точеное обновление конкретных полей
 	if _, ok := headerBanner[model.FieldTagID]; !ok {
 		for k, v := range headerBanner {
 			if k == model.FieldFeatureID {
@@ -273,6 +274,8 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 		return nil
 	}
 
+	// Если тэг меняется, то мержим два объекта баннера, после чего в бд удаляем старую информацию по привязке баннера к
+	// конкретным тегам и полям и создаем заново. А после так же точечно производим обновление полей
 	updateBanner, err := _mergeData(data, headerBanner)
 	if err != nil {
 		return errors.Wrap(err)
