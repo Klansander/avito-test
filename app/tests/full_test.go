@@ -200,7 +200,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusBadRequest, resp.Result().StatusCode)
 
-	//--------9------------
+	//--------10------------
 	req, err = http.NewRequest("PATCH", "/banner/2", strings.NewReader(name))
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -211,7 +211,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusNotFound, resp.Result().StatusCode)
 
-	//--------9------------
+	//--------11------------
 	name = `{
     "tag_id":[1,2],
     "feature_id":2,
@@ -229,7 +229,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusOK, resp.Result().StatusCode)
 
-	//--------10------------
+	//--------12------------
 
 	req, err = http.NewRequest("GET", "/user_banner?tag_id=1&&feature_id=2&&use_last_revision=true", strings.NewReader(name))
 	printErr(err, &countTest)
@@ -265,7 +265,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 		r.Equal(v, res2[k])
 	}
 
-	//--------9------------
+	//--------13------------
 	req, err = http.NewRequest("PATCH", "/banner/2", strings.NewReader(name))
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -276,7 +276,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusForbidden, resp.Result().StatusCode)
 
-	//--------10------------
+	//--------14------------
 	req, err = http.NewRequest("PATCH", "/banner/2", strings.NewReader(name))
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -287,7 +287,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusUnauthorized, resp.Result().StatusCode)
 
-	//--------9------------
+	//--------15------------
 	req, err = http.NewRequest("DELETE", "/banner/2", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -298,7 +298,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusForbidden, resp.Result().StatusCode)
 
-	//--------10------------
+	//--------16------------
 	req, err = http.NewRequest("DELETE", "/banner/2", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -309,7 +309,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusUnauthorized, resp.Result().StatusCode)
 
-	//--------9------------
+	//--------17------------
 	req, err = http.NewRequest("DELETE", "/banner/2", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -320,7 +320,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusNotFound, resp.Result().StatusCode)
 
-	//--------10------------
+	//--------18------------
 	req, err = http.NewRequest("DELETE", "/banner/s", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -331,7 +331,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusBadRequest, resp.Result().StatusCode)
 
-	//--------10------------
+	//--------19------------
 	req, err = http.NewRequest("DELETE", "/banner/1", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -342,7 +342,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusNoContent, resp.Result().StatusCode)
 
-	//--------10------------
+	//--------20------------
 
 	name = `{
     "tag_id":[1,2],
@@ -370,6 +370,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
     "content": {"title": "some_title", "text": "some_text", "url": "some_url"}
 }`
 
+	//--------21------------
+
 	req, err = http.NewRequest("POST", "/banner", strings.NewReader(name))
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -388,6 +390,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
     "is_active": false,
     "content": {"title": "some_title", "text": "some_text", "url": "some_url"}
 }`
+	//--------22------------
 
 	req, err = http.NewRequest("POST", "/banner", strings.NewReader(name))
 	printErr(err, &countTest)
@@ -407,7 +410,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
     "is_active": false,
     "content": {"title": "some_title", "text": "some_text", "url": "some_url"}
 }`
-
+	//--------23------------
 	req, err = http.NewRequest("POST", "/banner", strings.NewReader(name))
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -420,6 +423,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(resp.Body.String(), "{\"banner_id\":6}")
 
+	//--------24------------
+
 	req, err = http.NewRequest("DELETE", "/banner/?tag_id=1", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -429,6 +434,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	s.router.Router.ServeHTTP(resp, req)
 
 	r.Equal(http.StatusUnauthorized, resp.Result().StatusCode)
+
+	//--------25-----------
 
 	req, err = http.NewRequest("DELETE", "/banner/?tag_id=1", nil)
 	printErr(err, &countTest)
@@ -440,6 +447,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusForbidden, resp.Result().StatusCode)
 
+	//--------26------------
+
 	req, err = http.NewRequest("DELETE", "/banner/?tag_id=1", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -449,6 +458,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	s.router.Router.ServeHTTP(resp, req)
 
 	r.Equal(http.StatusNoContent, resp.Result().StatusCode)
+
+	//--------27------------
 
 	req, err = http.NewRequest("DELETE", "/banner/?feature_id=5", nil)
 	printErr(err, &countTest)
@@ -460,6 +471,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusNoContent, resp.Result().StatusCode)
 
+	//--------28------------
+
 	req, err = http.NewRequest("DELETE", "/banner/?feature_id=3", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -470,6 +483,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusNotFound, resp.Result().StatusCode)
 
+	//--------29------------
+
 	req, err = http.NewRequest("GET", "/banner/version?banner_id=1&&version=1", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -479,6 +494,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	s.router.Router.ServeHTTP(resp, req)
 
 	r.Equal(http.StatusOK, resp.Result().StatusCode)
+
+	//--------30------------
 
 	req, err = http.NewRequest("GET", "/banner/version?banner_id=1&&version=1", nil)
 	printErr(err, &countTest)
@@ -490,6 +507,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusUnauthorized, resp.Result().StatusCode)
 
+	//--------31------------
+
 	req, err = http.NewRequest("GET", "/banner/version?banner_id=1&&version=1", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -499,6 +518,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	s.router.Router.ServeHTTP(resp, req)
 
 	r.Equal(http.StatusForbidden, resp.Result().StatusCode)
+
+	//--------32------------
 
 	req, err = http.NewRequest("GET", "/banner/version?banner_id=1", nil)
 	printErr(err, &countTest)
@@ -510,6 +531,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	r.Equal(http.StatusOK, resp.Result().StatusCode)
 
+	//--------33------------
+
 	req, err = http.NewRequest("GET", "/banner/version?banner_id=2", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
@@ -519,6 +542,8 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	s.router.Router.ServeHTTP(resp, req)
 
 	r.Equal(http.StatusNotFound, resp.Result().StatusCode)
+
+	//--------34------------
 
 	req, err = http.NewRequest("GET", "/banner/version?banner_id=s", nil)
 	printErr(err, &countTest)
