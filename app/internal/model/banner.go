@@ -30,12 +30,12 @@ type HeaderBanner struct {
 
 type Banner struct {
 	Content   map[string]interface{} `json:"content"`
-	IsActive  bool                   `json:"is_active,omitempty"`
-	BannerID  int                    `json:"banner_id,omitempty"`
-	TagID     []int                  `json:"tag_id,omitempty"`
-	FeatureID int                    `json:"feature_id,omitempty"`
-	CreatedAt time.Time              `json:"created_at,omitempty"`
-	UpdatedAT time.Time              `json:"updated_at,omitempty"`
+	IsActive  bool                   `json:"is_active"`
+	BannerID  int                    `json:"banner_id"`
+	TagID     []int                  `json:"tag_id"`
+	FeatureID int                    `json:"feature_id"`
+	CreatedAt time.Time              `json:"created_at"`
+	UpdatedAT time.Time              `json:"updated_at"`
 }
 
 type BannerVersion struct {

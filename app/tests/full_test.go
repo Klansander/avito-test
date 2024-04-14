@@ -96,7 +96,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	}
 	//--------3---------
 
-	req, err = http.NewRequest("GET", "/user_banner?tag_id=1&&feature_id=6&&use_last_revision=true", strings.NewReader(name))
+	req, err = http.NewRequest("GET", "/user_banner?tag_id=1&&feature_id=6&&use_last_revision=true", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("token", "admin_token")
@@ -123,7 +123,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 		r.Equal(v, res2[k])
 	}
 	//--------4------------
-	req, err = http.NewRequest("GET", "/user_banner?tag_id=1&&feature_id=1", strings.NewReader(name))
+	req, err = http.NewRequest("GET", "/user_banner?tag_id=1&&feature_id=1", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("token", "user_token")
@@ -145,7 +145,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 	r.Equal(http.StatusBadRequest, resp.Result().StatusCode)
 
 	//--------6------------
-	req, err = http.NewRequest("GET", "/user_banner?feature_id=1", strings.NewReader(name))
+	req, err = http.NewRequest("GET", "/user_banner?feature_id=1", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("token", "user_token")
@@ -157,7 +157,7 @@ func (s *APITestSuite) TestAdminCreateCourse() {
 
 	//--------7------------
 
-	req, err = http.NewRequest("GET", "/banner", strings.NewReader(name))
+	req, err = http.NewRequest("GET", "/banner", nil)
 	printErr(err, &countTest)
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("token", "")

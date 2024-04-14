@@ -43,7 +43,7 @@ psql:
   limit-max: 1000
 
 cron:
-  interval: '5m'
+  interval: "300s"
 
 
 redis:

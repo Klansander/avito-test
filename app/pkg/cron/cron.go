@@ -18,6 +18,7 @@ func NewCron(ctx context.Context) (*Cron, error) {
 	cfg := pc.GetConfig(ctx)
 
 	s, err := gocron.NewScheduler()
+
 	if err != nil {
 		return nil, e.Wrap(err)
 	}

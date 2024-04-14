@@ -71,32 +71,33 @@ func (r *BannerRepository) UserBanner(c context.Context, userBannerQuery model.U
 
 	var (
 		res int
-		mes string
 		row sql.NullString
 	)
 
-	query := "select o_json,o_res,o_mes from public.fn_banner_get($1, $2,$3)"
+	query := "select o_json,o_res from public.fn_banner_get($1, $2,$3)"
 
 	// i_tag_id int,
 	// i_feature_id int,
 	// i_is_admin bool,
 	// out o_json json,
-	//	out o_res int,
 	//	out o_mes text
 
-	if err = r.db.DB.QueryRow(ctx, query, userBannerQuery.TagID, userBannerQuery.FeatureID, isAdmin).Scan(&row, &res, &mes); err != nil {
+	if err = r.db.DB.QueryRow(ctx, query, userBannerQuery.TagID, userBannerQuery.FeatureID, isAdmin).Scan(&row, &res); err != nil {
 		err = errors.Wrap(err)
 
 		return
 	}
-	if res != 0 || row.Valid {
-		err = errors.New(http.StatusNotFound, mes)
+
+	if res != 0 || !row.Valid {
+		err = errors.New(http.StatusNotFound, "Баннер не найден")
 		return
 	}
 
-	if err = json.Unmarshal([]byte(row.String), &data); err != nil {
-		err = errors.Wrap(err)
-		return
+	if row.Valid {
+		if err = json.Unmarshal([]byte(row.String), &data); err != nil {
+			err = errors.Wrap(err)
+			return
+		}
 	}
 
 	return
@@ -192,7 +193,7 @@ func (r *BannerRepository) CreateBanner(c context.Context, headerBanner model.Ne
 	}
 
 	if res != 0 {
-		err = errors.New(http.StatusNotFound, mes)
+		err = errors.New(http.StatusBadRequest, mes)
 		return id, err
 	}
 
@@ -258,13 +259,13 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 		for k, v := range headerBanner {
 			if k == model.FieldFeatureID {
 
-				if err = r.updateBanner(c, tx, bannerID, k, model.FieldBannerID, model.TableContents, v); err != nil {
+				if err = r.updateBanner(c, tx, bannerID, model.FieldBannerID, k, model.TableContents, v); err != nil {
 					return errors.Wrap(err)
 				}
 				continue
 			}
 
-			if err = r.updateBanner(c, tx, bannerID, k, model.FieldID, model.TableBanners, v); err != nil {
+			if err = r.updateBanner(c, tx, bannerID, model.FieldID, k, model.TableBanners, v); err != nil {
 				return errors.Wrap(err)
 			}
 
@@ -293,6 +294,7 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 	}
 
 	for k, v := range headerBanner {
+
 		if k == model.FieldContent || k == model.FieldIsActive {
 			if err = r.updateBanner(c, tx, bannerID, model.FieldID, k, model.TableBanners, v); err != nil {
 				return errors.Wrap(err)
@@ -306,15 +308,29 @@ func (r *BannerRepository) UpdateBanner(c context.Context, bannerID int, headerB
 }
 
 func (r *BannerRepository) updateBanner(ctx context.Context, tx pgx.Tx, bannerID int, whereField string, field string, table string, value interface{}) error {
+	query := ""
 
-	query := fmt.Sprintf(
+	if field == model.FieldFeatureID {
+
+		query = fmt.Sprintf(
+			"update public.%s "+
+				"set %s = $1 "+
+				"where %s = $2",
+			table, field, whereField,
+		)
+		if _, err := tx.Exec(ctx, query, value, bannerID); err != nil {
+			return errors.Wrap(err)
+		}
+		return nil
+	}
+
+	query = fmt.Sprintf(
 		"update public.%s "+
 			"set %s = $1, "+
 			"updated_at = $2 "+
 			"where %s = $3",
 		table, field, whereField,
 	)
-
 	if _, err := tx.Exec(ctx, query, value, time.Now(), bannerID); err != nil {
 		return errors.Wrap(err)
 	}
@@ -434,7 +450,6 @@ func (r *BannerRepository) SaveVersionBanner(c context.Context) {
 
 func (r *BannerRepository) saveRedis(c context.Context, item model.Banner) {
 	cfg := pc.GetConfig(c)
-	fmt.Println(cfg.Redis.TTL)
 
 	for _, tagID := range item.TagID {
 
@@ -469,7 +484,7 @@ func (r *BannerRepository) GetVersionBanner(c context.Context, headerBanner mode
 
 	startIndex := 0
 	stopIndex := -1
-	fmt.Println(headerBanner)
+
 	if headerBanner.Version != nil {
 		startIndex = *headerBanner.Version - 1
 		stopIndex = *headerBanner.Version - 1
@@ -559,7 +574,7 @@ func txTransaction(c context.Context, tx pgx.Tx, err error) {
 
 	if err != nil {
 		errRollback := tx.Rollback(c)
-		if err != nil {
+		if errRollback != nil {
 			logrus.Errorln("Ошибка отката тразакции", errRollback)
 		}
 	} else {

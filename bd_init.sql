@@ -66,21 +66,19 @@ $$;
 --alter function fn_banner_ins( boolean, int[], int, json, out int) owner to grandeas;
 
 create or replace function fn_banner_get(i_tag_id int, i_feature_id int, i_is_admin bool, out o_json json,
-                                         out o_res int, out o_mes text) returns record
+                                         out o_res int) returns record
     language plpgsql
 as
 $$
 begin
 
     o_res = 0;
-    o_mes = '';
     if (select count(*)
         from public.contents c
         where c.tag_id = i_tag_id
           and c.feature_id = i_feature_id) = 0
     then
         o_res = 1;
-        o_mes = 'Баннер для тега не найден';
         return;
 end if;
 

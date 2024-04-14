@@ -10,5 +10,5 @@ const (
 	TableBanners   = "banners"
 	TableContents  = "contents"
 	FieldTagID     = "tag_id"
-	FieldFeatureID = "field_id"
+	FieldFeatureID = "feature_id"
 )
