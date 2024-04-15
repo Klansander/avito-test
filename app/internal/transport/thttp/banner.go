@@ -194,7 +194,7 @@ func (r *Router) deleteBanner(c *gin.Context) {
 // @Failure 		403 "Пользователь не имеет доступа"
 // @Failure 		404  "Баннер не найден"
 // @Failure 		500 {object} swagger.Error "Внутренняя ошибка сервера"
-// @Router			/banner [delete]
+// @Router			/banner/ [delete]
 func (r *Router) deleteBannerByTagIDOrFeatureID(c *gin.Context) {
 
 	var banner model.BannerTagOrFeatureID
